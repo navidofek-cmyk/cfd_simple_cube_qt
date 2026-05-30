@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validace a vizualizace — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="active">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#validace-a-vizualizace">Validace a vizualizace</a><ul>
+<li><a href="#overovaci-skript">Ověřovací skript</a><ul>
+<li><a href="#proc-prave-tyto-kontroly">Proč právě tyto kontroly</a></li>
+</ul>
+</li>
+<li><a href="#grafy-konvergence">Grafy konvergence</a><ul>
+<li><a href="#reziduum-vs-zmena-poli-dve-ruzne-veci">Reziduum vs. změna polí — dvě různé věci</a></li>
+</ul>
+</li>
+<li><a href="#vizualizace-poli">Vizualizace polí</a></li>
+<li><a href="#vizualizace-matic">Vizualizace matic</a></li>
+<li><a href="#paraview">ParaView</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="validace-a-vizualizace">Validace a vizualizace<a class="headerlink" href="#validace-a-vizualizace" title="Permanent link">&para;</a></h1>
+<p>Jak ověřit, že výsledky jsou fyzikálně správné, a jak je zobrazit.</p>
+<h2 id="overovaci-skript">Ověřovací skript<a class="headerlink" href="#overovaci-skript" title="Permanent link">&para;</a></h2>
+<p><code>verify.py</code> provádí šest nezávislých kontrol na <code>fields.dat</code>:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Kontrola</th>
+<th>Co ověřuje</th>
+<th>Práh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Bilance hmoty</td>
+<td>$\sum \nabla\cdot\mathbf{u} \approx 0$ globálně</td>
+<td>&lt; 10⁻⁶</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Kontinuitní reziduum</td>
+<td>max lokální $|\nabla\cdot\mathbf{u}|$</td>
+<td>&lt; 10⁻⁴</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Symetrie kolem y=½</td>
+<td>$u_x(y) = u_x(L_y{-}y)$, $u_y$ antisym.</td>
+<td>&lt; 5·10⁻³</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Symetrie kolem z=½</td>
+<td>totéž v ose z</td>
+<td>&lt; 5·10⁻³</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Tlakový pokles</td>
+<td>$\Delta p &lt; 0$ (klesá po proudu)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6</td>
+<td>No-slip</td>
+<td>$|U|=0$ uvnitř krychle</td>
+<td>&lt; 10⁻¹⁰</td>
+</tr>
+</tbody>
+</table>
+<h3 id="proc-prave-tyto-kontroly">Proč právě tyto kontroly<a class="headerlink" href="#proc-prave-tyto-kontroly" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Bilance + reziduum</strong> — přímo testují, že SIMPLE splnil kontinuitu (jádro
+  algoritmu). Hodnota ~10⁻¹⁶ = strojová přesnost.</li>
+<li><strong>Symetrie</strong> — pro Re = 20 a centrovanou krychli <em>musí</em> být řešení symetrické
+  ve y i z. Asymetrie by signalizovala chybu. Je to nezávislý test, který
+  nevychází z žádné rovnice, jen z geometrie.</li>
+<li><strong>Tlakový pokles</strong> — fyzikální zdravý rozum (tekutina teče z vyššího do
+  nižšího tlaku).</li>
+<li><strong>No-slip</strong> — ověří, že maska pevných buněk funguje (rychlost přesně 0).</li>
+</ul>
+<h2 id="grafy-konvergence">Grafy konvergence<a class="headerlink" href="#grafy-konvergence" title="Permanent link">&para;</a></h2>
+<p><code>plot_convergence.py</code> čte <code>convergence.dat</code> a vykreslí historii reziduí:</p>
+<ul>
+<li><strong>Panel 1</strong> — kontinuitní reziduum (log osa) s vyznačeným minimem</li>
+<li><strong>Panel 2</strong> — <code>dU/U</code> a <code>dP/P</code> (změna polí mezi iteracemi)</li>
+</ul>
+<p>Skript zároveň exportuje očištěná data zpět zpět do <code>convergence.dat</code>
+(sloupce <code>iter cont dU/U dP/P</code>).</p>
+<h3 id="reziduum-vs-zmena-poli-dve-ruzne-veci">Reziduum vs. změna polí — dvě různé věci<a class="headerlink" href="#reziduum-vs-zmena-poli-dve-ruzne-veci" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>cont        = Σ|div U|        ... jak je porušena bilance hmoty
+dU/U, dP/P  = ‖ΔU‖/‖U‖        ... jak moc se řešení ještě hýbe
+</code></pre></div>
+
+<p>Důležité při diagnostice stagnace: na jemné síti se kontinuitní reziduum ustálí
+kolem 10⁻⁵, ale <code>dU/U</code> a <code>dP/P</code> můžou být mnohem nižší — pole je prakticky
+zamrzlé, jen se kontinuita mírně přeskupuje přes Rhie–Chow korekci. Snapshoty
+(<code>fields_0250/0300/0400.dat</code>) to potvrdí přímým porovnáním polí.</p>
+<h2 id="vizualizace-poli">Vizualizace polí<a class="headerlink" href="#vizualizace-poli" title="Permanent link">&para;</a></h2>
+<p><code>plot_fields.py</code> (čte <code>fields.dat</code>) vykreslí řezy XY a XZ:</p>
+<table>
+<thead>
+<tr>
+<th>Veličina</th>
+<th>Co ukazuje</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rychlost $|U|$</td>
+<td>zpomalení před krychlí, urychlení po bocích, úplav za ní</td>
+</tr>
+<tr>
+<td>Tlak $p$</td>
+<td>vysoký před překážkou, nízký za ní (tlakový odpor)</td>
+</tr>
+<tr>
+<td>Proudnice</td>
+<td>obtékání + symetrická recirkulační zóna</td>
+</tr>
+</tbody>
+</table>
+<p><code>plot_mesh.py</code> (čte <code>mesh.dat</code>) zobrazí 3D schéma tunelu, polohu řezů a detail
+sítě kolem krychle.</p>
+<h2 id="vizualizace-matic">Vizualizace matic<a class="headerlink" href="#vizualizace-matic" title="Permanent link">&para;</a></h2>
+<p><code>plot_matrix.py</code> (čte <code>pmatrix.dat</code>, <code>umatrix.dat</code>) ukáže:</p>
+<ul>
+<li><strong>Sparsity pattern</strong> — tři diagonální pásy, identity řádky pevných buněk</li>
+<li><strong>Prostorové rozložení koeficientů</strong> — aP, aE, aN po doméně</li>
+<li><strong>Diagonální dominance</strong> — |aP|/Σ|off| (stabilita)</li>
+<li><strong>Hustý blok</strong> kolem krychle — 7bodový stencil zblízka</li>
+</ul>
+<h2 id="paraview">ParaView<a class="headerlink" href="#paraview" title="Permanent link">&para;</a></h2>
+<p>Pro plné 3D zkoumání otevři <code>channel_cube.vtk</code> v ParaView — řezy v libovolné
+rovině, izoplochy rychlosti, sledování částic (streamlines), filtrování krychle
+přes pole <code>solid</code>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Typický pracovní postup</p>
+<p>1. <code>make &amp;&amp; OMP_NUM_THREADS=6 ./channelCube</code><br>
+2. <code>python verify.py</code> — všechny kontroly musí projít<br>
+3. <code>python plot_convergence.py</code> — zkontroluj konvergenci<br>
+4. <code>python plot_fields.py</code> — podívej se na proudění<br>
+5. ParaView <code>channel_cube.vtk</code> — 3D detail</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="solver__02-running.html">
+        ← Spuštění a parametry</a>
+    
+    
+      <a class="next" href="results.html">
+        Vizualizace výsledků →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

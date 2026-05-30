@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CgSolver.hpp — lambda a workspace — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="active">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#cgsolverhpp-lambda-a-workspace">CgSolver.hpp — lambda a workspace</a><ul>
+<li><a href="#workspace">Workspace</a></li>
+<li><a href="#funkce-cgsolve">Funkce cgSolve</a></li>
+<li><a href="#jazykove-prvky">Jazykové prvky</a><ul>
+<li><a href="#lambda-s-capture">Lambda s capture [&amp;]</a></li>
+<li><a href="#maticovy-soucin-bez-matice">Maticový součin bez matice</a></li>
+<li><a href="#reference-na-vnitrek-pole">Reference na vnitřek pole</a></li>
+</ul>
+</li>
+<li><a href="#paralelni-redukce">Paralelní redukce</a></li>
+<li><a href="#telo-iterace">Tělo iterace</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="cgsolverhpp-lambda-a-workspace">CgSolver.hpp — lambda a workspace<a class="headerlink" href="#cgsolverhpp-lambda-a-workspace" title="Permanent link">&para;</a></h1>
+<p>Conjugate Gradient řešič tlakové rovnice. Ukazuje <strong>lambda s capture</strong>,
+<strong>workspace vzor</strong> a paralelní redukce.</p>
+<h2 id="workspace">Workspace<a class="headerlink" href="#workspace" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="k">struct</span><span class="w"> </span><span class="nc">CgWorkspace</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">Ax</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">Ap</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">ensure</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">size</span><span class="p">())</span><span class="o">==</span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">        </span><span class="n">b</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">Ax</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">dir</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">Ap</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<p>CG potřebuje 5 pomocných vektorů. <code>CgWorkspace</code> je drží a <code>ensure(N)</code> je
+<strong>jednou</strong> naalokuje (při změně velikosti). Solver ho drží jako member a předává
+do každého z ~1000 volání <code>cgSolve</code> za běh — žádné opakované alokace.</p>
+<p><code>static_cast&lt;int&gt;</code> je explicitní, typově bezpečný převod (<code>b.size()</code> vrací
+<code>size_t</code>) — čistší než C-style <code>(int)</code>.</p>
+<h2 id="funkce-cgsolve">Funkce cgSolve<a class="headerlink" href="#funkce-cgsolve" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kr">inline</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">cgSolve</span><span class="p">(</span><span class="n">fvMatrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">CgWorkspace</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ws</span><span class="p">,</span>
+<span class="w">                    </span><span class="kt">int</span><span class="w"> </span><span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Mesh</span><span class="o">&amp;</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">M</span><span class="p">.</span><span class="n">m</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span>
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">M</span><span class="p">.</span><span class="n">psi</span><span class="p">.</span><span class="n">d</span><span class="p">;</span><span class="w">          </span><span class="c1">// reference na řešené pole tlaku</span>
+<span class="w">    </span><span class="n">ws</span><span class="p">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">negAv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for collapse(3)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="cm">/* všechny buňky */</span><span class="p">){</span>
+<span class="w">            </span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">);</span>
+<span class="w">            </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">M</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">M</span><span class="p">.</span><span class="n">aE</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="cm">/* ... ostatních 5 sousedů ... */</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="jazykove-prvky">Jazykové prvky<a class="headerlink" href="#jazykove-prvky" title="Permanent link">&para;</a></h2>
+<h3 id="lambda-s-capture">Lambda s capture <code>[&amp;]</code><a class="headerlink" href="#lambda-s-capture" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">auto</span><span class="w"> </span><span class="n">negAv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
+</code></pre></div>
+
+<p><code>negAv</code> je lokální funkce počítající $\mathbf{y} = (-\mathbf{A})\mathbf{v}$.</p>
+<ul>
+<li><code>[&amp;]</code> = <strong>capture by reference</strong> — lambda vidí všechny lokální proměnné
+  (<code>m</code>, <code>M</code>) odkazem, bez kopírování. Může je číst přímo.</li>
+<li><code>auto</code> — typ lambdy je anonymní, překladač ho odvodí.</li>
+<li>Volá se pak <code>negAv(ws.dir, ws.Ap)</code> — třikrát v algoritmu, bez duplikace kódu.</li>
+</ul>
+<h3 id="maticovy-soucin-bez-matice">Maticový součin bez matice<a class="headerlink" href="#maticovy-soucin-bez-matice" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">M</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">M</span><span class="p">.</span><span class="n">aE</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+</code></pre></div>
+
+<p>Násobení $(-\mathbf{A})\mathbf{v}$ se dělá procházením 7 diagonál a sousedů —
+matice nikdy neexistuje jako 2D struktura. To je smysl uložení po diagonálách
+(viz <a href="theory__07-linear-system.html">Řídké matice</a>). Znaménko <code>-</code> realizuje obrat
+na pozitivně definitní soustavu.</p>
+<h3 id="reference-na-vnitrek-pole">Reference na vnitřek pole<a class="headerlink" href="#reference-na-vnitrek-pole" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">M</span><span class="p">.</span><span class="n">psi</span><span class="p">.</span><span class="n">d</span><span class="p">;</span><span class="w">   </span><span class="c1">// přímý přístup k std::vector uvnitř Field</span>
+</code></pre></div>
+
+<p><code>x</code> je alias pro vektor hodnot tlaku — CG zapisuje řešení přímo do pole <code>p</code>
+solveru.</p>
+<h2 id="paralelni-redukce">Paralelní redukce<a class="headerlink" href="#paralelni-redukce" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kt">double</span><span class="w"> </span><span class="n">rr</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="cp">#pragma omp parallel for reduction(+:rr)</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">){</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">b</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">rr</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+
+<p>Skalární součin $\mathbf{r}^T\mathbf{r}$ paralelně — <code>reduction(+:rr)</code> dá každému
+vláknu privátní <code>rr</code> a na konci je sečte. Stejně pro $\mathbf{d}^T\mathbf{Ap}$.</p>
+<h2 id="telo-iterace">Tělo iterace<a class="headerlink" href="#telo-iterace" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">k</span><span class="o">&lt;</span><span class="n">maxIter</span><span class="p">;</span><span class="o">++</span><span class="n">k</span><span class="p">){</span>
+<span class="w">    </span><span class="n">negAv</span><span class="p">(</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">);</span><span class="w">                         </span><span class="c1">// Ap = (-A)·dir</span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">pAp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">    </span><span class="cp">#pragma omp parallel for reduction(+:pAp)</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">pAp</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">alpha</span><span class="o">=</span><span class="n">rr</span><span class="o">/</span><span class="p">(</span><span class="n">pAp</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">);</span><span class="w">                   </span><span class="c1">// délka kroku</span>
+
+<span class="w">    </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">){</span><span class="w"> </span><span class="n">x</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">alpha</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">alpha</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">rr_new</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">    </span><span class="cp">#pragma omp parallel for reduction(+:rr_new)</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">rr_new</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rr_new</span><span class="p">)</span><span class="o">/</span><span class="n">res0</span><span class="o">&lt;</span><span class="n">tol</span><span class="p">)</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w">          </span><span class="c1">// konvergence</span>
+
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">beta</span><span class="o">=</span><span class="n">rr_new</span><span class="o">/</span><span class="p">(</span><span class="n">rr</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">);</span>
+<span class="w">    </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+</span><span class="n">beta</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">    </span><span class="n">rr</span><span class="o">=</span><span class="n">rr_new</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Přesně mapuje vzorce z <a href="theory__08-cg.html">teorie CG</a>. Všechny smyčky jsou
+paralelní. <code>+1e-30</code> ve jmenovatelích brání dělení nulou (když reziduum padne na
+nulu přesně).</p>
+<div class="admonition note">
+<p class="admonition-title">inline funkce v hlavičce</p>
+<p><code>cgSolve</code> je <code>inline</code> a celá v hlavičce — může se
+vložit do více .cpp bez chyby linkeru a překladač ji může optimalizovat
+v místě volání.</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="cpp__04-fvmatrix.html">
+        ← fvMatrix.hpp — matice a stencil</a>
+    
+    
+      <a class="next" href="cpp__06-simple.html">
+        Simple.cpp — jádro řešiče →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

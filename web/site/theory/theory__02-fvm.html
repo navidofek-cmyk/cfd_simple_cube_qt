@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Metoda konečných objemů (FVM) — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="active">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#metoda-konecnych-objemu-fvm">Metoda konečných objemů (FVM)</a><ul>
+<li><a href="#diskretizace-domeny">Diskretizace domény</a></li>
+<li><a href="#integrace-pres-kontrolni-objem">Integrace přes kontrolní objem</a><ul>
+<li><a href="#difuzni-clen">Difúzní člen</a></li>
+<li><a href="#plochy-sten-ve-3d">Plochy stěn ve 3D</a></li>
+</ul>
+</li>
+<li><a href="#vysledny-tvar-7bodovy-stencil">Výsledný tvar: 7bodový stencil</a></li>
+<li><a href="#pevna-prekazka-krychle">Pevná překážka (krychle)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="metoda-konecnych-objemu-fvm">Metoda konečných objemů (FVM)<a class="headerlink" href="#metoda-konecnych-objemu-fvm" title="Permanent link">&para;</a></h1>
+<p>FVM převádí spojité PDE na algebraické rovnice tím, že doménu rozdělí na malé
+<strong>kontrolní objemy</strong> (buňky) a v každém integruje zákony zachování.</p>
+<h2 id="diskretizace-domeny">Diskretizace domény<a class="headerlink" href="#diskretizace-domeny" title="Permanent link">&para;</a></h2>
+<p>Doména 4×1×1 m se rozdělí na uniformní kartézskou mřížku $n_x \times n_y \times n_z$
+buněk. Každá buňka je kvádr o rozměrech $\Delta x \times \Delta y \times \Delta z$.
+V řešiči je síť <strong>kolokovaná</strong> — všechny veličiny (rychlost i tlak) jsou uloženy
+ve <strong>středech buněk</strong>.</p>
+<div class="highlight"><pre><span></span><code>        N (j+1)
+        │
+ W ───┌─┼─┐─── E          každá buňka má 6 sousedů ve 3D:
+(i-1) │ P │ (i+1)         W/E (osa x), S/N (osa y), B/F (osa z)
+      └─┼─┘
+        │
+        S (j-1)        (+ B = k-1 vzadu, F = k+1 vepředu)
+</code></pre></div>
+
+<p>Indexace v kódu (<code>Mesh::id</code>):</p>
+<p>$$\text{id}(i,j,k) = i + j\,n_x + k\,n_x n_y$$</p>
+<p>což je lineární index do 1D pole — řádkové uspořádání (x se mění nejrychleji).</p>
+<h2 id="integrace-pres-kontrolni-objem">Integrace přes kontrolní objem<a class="headerlink" href="#integrace-pres-kontrolni-objem" title="Permanent link">&para;</a></h2>
+<p>Klíčový krok: rovnici zintegrujeme přes objem buňky $V$ a použijeme
+<strong>Gaussovu–Ostrogradského větu</strong> (objemový integrál divergence = plošný integrál
+přes stěny):</p>
+<p>$$\int_V \nabla \cdot \mathbf{F} \, dV = \oint_{\partial V} \mathbf{F} \cdot \mathbf{n} \, dS
+\approx \sum_{f} \mathbf{F}_f \cdot \mathbf{n}_f \, A_f$$</p>
+<p>Tedy <strong>objemový integrál se změní na součet toků přes 6 stěn</strong>. To je podstata
+FVM: pracujeme s toky přes stěny, ne s derivacemi v bodech.</p>
+<h3 id="difuzni-clen">Difúzní člen<a class="headerlink" href="#difuzni-clen" title="Permanent link">&para;</a></h3>
+<p>Difúzi $\nu\nabla^2\phi$ zintegrujeme:</p>
+<p>$$\int_V \nu\nabla^2\phi\,dV = \sum_f \nu (\nabla\phi)_f \cdot \mathbf{n}_f A_f$$</p>
+<p>Gradient na stěně mezi buňkami $P$ a $E$ aproximujeme centrální diferencí:</p>
+<p>$$(\nabla\phi)_f \cdot \mathbf{n}_f \approx \frac{\phi_E - \phi_P}{\Delta x}$$</p>
+<p>Příspěvek stěny do rovnice buňky $P$ je tedy:</p>
+<p>$$\nu \frac{A_x}{\Delta x}(\phi_E - \phi_P)$$</p>
+<p>V kódu je $A_x = \Delta y\,\Delta z$ (plocha stěny kolmé na x) a koeficient
+$g_x = \nu A_x/\Delta x$. Tento člen přispívá:</p>
+<ul>
+<li>$+g_x$ k diagonále buňky P (člen $-\phi_P$ se záporným znaménkem → kladná diagonála)</li>
+<li>$-g_x$ k mimodiagonále (soused E)</li>
+</ul>
+<h3 id="plochy-sten-ve-3d">Plochy stěn ve 3D<a class="headerlink" href="#plochy-sten-ve-3d" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Stěna</th>
+<th>Normála</th>
+<th>Plocha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W, E</td>
+<td>osa x</td>
+<td>$A_x = \Delta y \, \Delta z$</td>
+</tr>
+<tr>
+<td>S, N</td>
+<td>osa y</td>
+<td>$A_y = \Delta x \, \Delta z$</td>
+</tr>
+<tr>
+<td>B, F</td>
+<td>osa z</td>
+<td>$A_z = \Delta x \, \Delta y$</td>
+</tr>
+</tbody>
+</table>
+<p>Objem buňky: $V = \Delta x\,\Delta y\,\Delta z$. Tyto hodnoty drží struktura
+<a href="cpp__03-mesh.html"><code>Mesh</code></a>.</p>
+<h2 id="vysledny-tvar-7bodovy-stencil">Výsledný tvar: 7bodový stencil<a class="headerlink" href="#vysledny-tvar-7bodovy-stencil" title="Permanent link">&para;</a></h2>
+<p>Po diskretizaci difúze i konvekce dostane každá buňka rovnici tvaru:</p>
+<p>$$a_P \phi_P = a_E\phi_E + a_W\phi_W + a_N\phi_N + a_S\phi_S + a_F\phi_F + a_B\phi_B + b$$</p>
+<p>To je <strong>7bodový stencil</strong> (buňka P + 6 sousedů). Koeficienty $a_E,\dots,a_B$ a
+zdroj $b$ jsou přesně to, co ukládá šablonová struktura
+<a href="cpp__04-fvmatrix.html"><code>fvMatrix</code></a>. Tato lineární soustava se pak řeší
+iteračně.</p>
+<h2 id="pevna-prekazka-krychle">Pevná překážka (krychle)<a class="headerlink" href="#pevna-prekazka-krychle" title="Permanent link">&para;</a></h2>
+<p>Buňky uvnitř krychle jsou označeny jako <strong>solid</strong> (maska <code>Mesh::solid</code>).
+V matici dostanou <strong>identitu</strong> ($a_P = 1$, ostatní = 0, $b = 0$), takže jejich
+hodnota je nulová (no-slip). Sousední tekutinové buňky vidí stěnu krychle jako
+Dirichletovu okrajovou podmínku — viz <a href="theory__06-boundary.html">Okrajové podmínky</a>.</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="theory__01-navier-stokes.html">
+        ← 1. Navierovy–Stokesovy rovnice</a>
+    
+    
+      <a class="next" href="theory__03-convection.html">
+        3. Konvekce a upwind schéma →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

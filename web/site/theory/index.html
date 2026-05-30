@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3D CFD řešič — kanál s krychlí — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="active">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#3d-cfd-resic-kanal-s-krychli">3D CFD řešič — kanál s krychlí</a><ul>
+<li><a href="#co-resic-pocita">Co řešič počítá</a></li>
+<li><a href="#jak-je-dokumentace-clenena">Jak je dokumentace členěná</a></li>
+<li><a href="#architektura-jednim-pohledem">Architektura jedním pohledem</a></li>
+<li><a href="#technologie">Technologie</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="3d-cfd-resic-kanal-s-krychli">3D CFD řešič — kanál s krychlí<a class="headerlink" href="#3d-cfd-resic-kanal-s-krychli" title="Permanent link">&para;</a></h1>
+<p>Dokumentace k vlastnímu řešiči nestlačitelného laminárního proudění metodou
+konečných objemů (FVM) s algoritmem <strong>SIMPLE</strong>, napsanému v C++20 a
+paralelizovanému přes OpenMP.</p>
+<h2 id="co-resic-pocita">Co řešič počítá<a class="headerlink" href="#co-resic-pocita" title="Permanent link">&para;</a></h2>
+<p>Ustálené laminární obtékání <strong>krychle</strong> umístěné uprostřed hranatého tunelu
+(kanálu se čtvercovým průřezem):</p>
+<div class="highlight"><pre><span></span><code>        ┌─────────────────────────────────────┐
+ U_in → │            ┌──┐                       │ → outlet (p=0)
+   →    │   proud    │██│   úplav               │   →
+   →    │            └──┘                       │
+        └─────────────────────────────────────┘
+              stěny (no-slip) nahoře/dole/bok
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Veličina</th>
+<th>Hodnota</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doména</td>
+<td>4 × 1 × 1 m</td>
+</tr>
+<tr>
+<td>Krychle</td>
+<td>0.2 × 0.2 × 0.2 m, střed (1.0, 0.5, 0.5)</td>
+</tr>
+<tr>
+<td>Reynoldsovo číslo</td>
+<td>Re = 20 (na základě strany krychle)</td>
+</tr>
+<tr>
+<td>Vstupní rychlost</td>
+<td>U_in = 1 m/s</td>
+</tr>
+<tr>
+<td>Síť</td>
+<td>až 320 × 80 × 80 = 2 mil. buněk</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jak-je-dokumentace-clenena">Jak je dokumentace členěná<a class="headerlink" href="#jak-je-dokumentace-clenena" title="Permanent link">&para;</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Tři části</p>
+<p><strong>Teorie</strong> — matematika od Navierových–Stokesových rovnic přes
+FVM diskretizaci, algoritmus SIMPLE, Rhie–Chow interpolaci až po řešení
+řídkých soustav metodou sdružených gradientů.</p>
+<p><strong>C++ implementace</strong> — výklad každého souboru řádek po řádku,
+včetně detailního vysvětlení použitých jazykových prvků (šablony, struktury,
+přetěžování operátorů, RAII, lambda výrazy, OpenMP pragmy).</p>
+<p><strong>Řešič</strong> — jak do sebe kusy zapadají, spuštění, parametry,
+validace.</p>
+</div>
+
+<h2 id="architektura-jednim-pohledem">Architektura jedním pohledem<a class="headerlink" href="#architektura-jednim-pohledem" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>main.cpp
+   │  vytvoří
+   ▼
+ChannelSolver ──── Mesh           (geometrie + maska pevných buněk)
+   │           ├── Field&lt;Vec3&gt; U  (rychlost)
+   │           ├── Field&lt;double&gt; p (tlak)
+   │           └── CgWorkspace
+   │
+   │  solve() = SIMPLE smyčka:
+   │     1. buildUEqn  → fvMatrix&lt;Vec3&gt;   (hybnost)
+   │     2. solveWithExtra (Jacobi)        → U*
+   │     3. buildPEqn  → fvMatrix&lt;double&gt; (tlak)
+   │     4. cgSolve    (Conjugate Gradient) → p
+   │     5. Rhie–Chow korekce toků
+   │     6. korekce rychlosti
+   │
+   ▼
+io::writeVTK / writeFields → vizualizace (ParaView, matplotlib)
+</code></pre></div>
+
+<h2 id="technologie">Technologie<a class="headerlink" href="#technologie" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>C++20</strong> — šablony, <code>std::vector</code>, RAII, agregátní inicializace</li>
+<li><strong>OpenMP</strong> — datová paralelizace (4.2× zrychlení na 6 jádrech)</li>
+<li><strong>Python</strong> — vizualizace (matplotlib) a tato dokumentace (FastAPI)</li>
+<li><strong>uv</strong> — správa Python prostředí</li>
+</ul>
+<p>Začni částí <a href="theory__01-navier-stokes.html">Teorie → Navierovy–Stokesovy rovnice</a>.</p>
+
+  <nav class="page-nav">
+    <span></span>
+    
+      <a class="next" href="theory__01-navier-stokes.html">
+        1. Navierovy–Stokesovy rovnice →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

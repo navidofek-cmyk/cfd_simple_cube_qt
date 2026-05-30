@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Řídké matice a stencil — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="active">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#ridke-matice-a-stencil">Řídké matice a stencil</a><ul>
+<li><a href="#struktura-matice">Struktura matice</a></li>
+<li><a href="#ulozeni-po-diagonalach">Uložení po diagonálách</a></li>
+<li><a href="#vzor-ridkosti-sparsity-pattern">Vzor řídkosti (sparsity pattern)</a></li>
+<li><a href="#diagonalni-dominance">Diagonální dominance</a></li>
+<li><a href="#dve-ruzne-soustavy">Dvě různé soustavy</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="ridke-matice-a-stencil">Řídké matice a stencil<a class="headerlink" href="#ridke-matice-a-stencil" title="Permanent link">&para;</a></h1>
+<p>Po diskretizaci je každá rovnice (hybnost i tlak) lineární soustava
+$\mathbf{A}\boldsymbol{\psi} = \mathbf{b}$, kde $\mathbf{A}$ je obrovská, ale
+<strong>řídká</strong>.</p>
+<h2 id="struktura-matice">Struktura matice<a class="headerlink" href="#struktura-matice" title="Permanent link">&para;</a></h2>
+<p>Pro síť s $N = n_x n_y n_z$ buňkami je $\mathbf{A}$ rozměru $N\times N$. Pro
+2 mil. buněk to je matice $2\,000\,000 \times 2\,000\,000$ — uložit ji hustě by
+znamenalo $4\cdot10^{12}$ čísel (32 TB). Nemožné.</p>
+<p>Naštěstí je <strong>řídká</strong>: 7bodový stencil znamená <strong>maximálně 7 nenul na řádek</strong>
+(diagonála + 6 sousedů). Skutečná paměť je tedy $\sim 7N$ čísel.</p>
+<h2 id="ulozeni-po-diagonalach">Uložení po diagonálách<a class="headerlink" href="#ulozeni-po-diagonalach" title="Permanent link">&para;</a></h2>
+<p>Místo obecného řídkého formátu (CSR) využíváme strukturu mřížky: matice má
+<strong>7 diagonál</strong> na pevných pozicích. Stačí 7 polí délky $N$:</p>
+<table>
+<thead>
+<tr>
+<th>Pole</th>
+<th>Diagonála</th>
+<th>Soused</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aP</code></td>
+<td>hlavní (0)</td>
+<td>buňka sama</td>
+</tr>
+<tr>
+<td><code>aE</code></td>
+<td>+1</td>
+<td>i+1 (východ)</td>
+</tr>
+<tr>
+<td><code>aW</code></td>
+<td>−1</td>
+<td>i−1 (západ)</td>
+</tr>
+<tr>
+<td><code>aN</code></td>
+<td>+$n_x$</td>
+<td>j+1 (sever)</td>
+</tr>
+<tr>
+<td><code>aS</code></td>
+<td>−$n_x$</td>
+<td>j−1 (jih)</td>
+</tr>
+<tr>
+<td><code>aF</code></td>
+<td>+$n_x n_y$</td>
+<td>k+1 (předek)</td>
+</tr>
+<tr>
+<td><code>aB</code></td>
+<td>−$n_x n_y$</td>
+<td>k−1 (zadek)</td>
+</tr>
+</tbody>
+</table>
+<p>Toto je přesně to, co drží struktura <a href="cpp__04-fvmatrix.html"><code>fvMatrix</code></a>. Násobení
+matice vektorem se pak dělá bez explicitní matice — jen procházením sousedů.</p>
+<h2 id="vzor-ridkosti-sparsity-pattern">Vzor řídkosti (sparsity pattern)<a class="headerlink" href="#vzor-ridkosti-sparsity-pattern" title="Permanent link">&para;</a></h2>
+<p>Pro 2D řez vypadá matice takto (modré = nenuly):</p>
+<div class="highlight"><pre><span></span><code>          sloupec →
+řádek ┌─╲──────╲──────────┐   ╲ = hlavní diagonála (aP)
+  ↓   │  ╲──────╲          │   sousední ╲ = aE, aW (±1)
+      │   ╲──────╲─────────│   vzdálené ╲ = aN, aS (±nx)
+      │    ╲──────╲        │
+      └───────────────────┘   červené řádky = pevné buňky (identita)
+</code></pre></div>
+
+<p>Tři „pásy" odpovídají diagonálám. Pevné buňky (krychle) mají jen diagonálu
+(identita). Tlaková matice je <strong>symetrická</strong> (Laplaceův operátor), hybnostní
+<strong>nesymetrická</strong> (upwind konvekce posílá různé příspěvky do aE vs aW).</p>
+<div class="admonition note">
+<p class="admonition-title">Vizualizace</p>
+<p>Skript <code>plot_matrix.py</code> vykreslí sparsity pattern, prostorové
+rozložení koeficientů a hustý blok kolem krychle. Export koeficientů zajišťují
+<code>io::writePMatrix</code> a <code>io::writeUMatrix</code>.</p>
+</div>
+
+<h2 id="diagonalni-dominance">Diagonální dominance<a class="headerlink" href="#diagonalni-dominance" title="Permanent link">&para;</a></h2>
+<p>Pro stabilitu iteračních solverů potřebujeme <strong>diagonální dominanci</strong>:</p>
+<p>$$|a_P| \geq \sum_{nb} |a_{nb}|$$</p>
+<ul>
+<li><strong>Tlaková matice</strong>: $|a_P| = \sum|a_{nb}|$ uvnitř domény (slabá dominance);
+  na hranici s Dirichlet (outlet) se diagonála zvětší → ostrá dominance.</li>
+<li><strong>Hybnostní matice</strong>: upwind konvekce + podrelaxace dělají diagonálu výrazně
+  dominantní (poměr 1,5–3×).</li>
+</ul>
+<p>Bez dominance by Jacobi/Gauss–Seidel divergovaly a CG by ztratil
+pozitivní definitnost.</p>
+<h2 id="dve-ruzne-soustavy">Dvě různé soustavy<a class="headerlink" href="#dve-ruzne-soustavy" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Hybnost (<code>UEqn</code>)</th>
+<th>Tlak (<code>pEqn</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Typ</td>
+<td><code>fvMatrix&lt;Vec3&gt;</code></td>
+<td><code>fvMatrix&lt;double&gt;</code></td>
+</tr>
+<tr>
+<td>Symetrie</td>
+<td>nesymetrická</td>
+<td>symetrická</td>
+</tr>
+<tr>
+<td>Řešič</td>
+<td>Jacobi (40 sweepů)</td>
+<td>Conjugate Gradient</td>
+</tr>
+<tr>
+<td>Definitnost</td>
+<td>diag. dominantní</td>
+<td>neg. semidefinitní → CG na $-\mathbf{A}$</td>
+</tr>
+</tbody>
+</table>
+<p>Tlaková rovnice je nejdražší část (řeší se přesně každou iteraci) → používá
+efektivní <a href="theory__08-cg.html">CG solver</a>.</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="theory__06-boundary.html">
+        ← 6. Okrajové podmínky</a>
+    
+    
+      <a class="next" href="theory__08-cg.html">
+        8. Conjugate Gradient solver →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

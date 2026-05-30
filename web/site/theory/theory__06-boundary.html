@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Okrajové podmínky — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="active">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#okrajove-podminky">Okrajové podmínky</a><ul>
+<li><a href="#prehled">Přehled</a></li>
+<li><a href="#dirichletova-podminka-predepsana-hodnota">Dirichletova podmínka (předepsaná hodnota)</a><ul>
+<li><a href="#inlet-i-konvektivni-tok">Inlet — i konvektivní tok</a></li>
+</ul>
+</li>
+<li><a href="#neumannova-podminka-predepsany-gradient">Neumannova podmínka (předepsaný gradient)</a></li>
+<li><a href="#outlet-pro-tlak-dirichlet-p-0">Outlet pro tlak — Dirichlet p = 0</a></li>
+<li><a href="#krychle-jako-vnitrni-hranice">Krychle jako vnitřní hranice</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="okrajove-podminky">Okrajové podmínky<a class="headerlink" href="#okrajove-podminky" title="Permanent link">&para;</a></h1>
+<p>Doména má pět typů hranic. Každá vyžaduje jiné zacházení pro rychlost a tlak.</p>
+<h2 id="prehled">Přehled<a class="headerlink" href="#prehled" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>                  WALL (no-slip)
+        ┌───────────────────────────────┐
+INLET   │             ┌──┐              │  OUTLET
+U=(U_in,│             │██│ CUBE         │  ∂U/∂n=0
+0,0)  → │             └──┘ (no-slip)    │  p=0
+∂p/∂n=0 │                               │
+        └───────────────────────────────┘
+                  WALL (no-slip)
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Hranice</th>
+<th>Rychlost</th>
+<th>Tlak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inlet (x=0)</td>
+<td>Dirichlet $\mathbf{u}=(U_{in},0,0)$</td>
+<td>Neumann $\partial p/\partial n = 0$</td>
+</tr>
+<tr>
+<td>Outlet (x=L)</td>
+<td>Neumann $\partial \mathbf{u}/\partial n = 0$</td>
+<td>Dirichlet $p = 0$</td>
+</tr>
+<tr>
+<td>Stěny (±y, ±z)</td>
+<td>Dirichlet $\mathbf{u}=0$ (no-slip)</td>
+<td>Neumann</td>
+</tr>
+<tr>
+<td>Krychle</td>
+<td>Dirichlet $\mathbf{u}=0$ (no-slip)</td>
+<td>Neumann</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dirichletova-podminka-predepsana-hodnota">Dirichletova podmínka (předepsaná hodnota)<a class="headerlink" href="#dirichletova-podminka-predepsana-hodnota" title="Permanent link">&para;</a></h2>
+<p>Pro stěnu a krychli (no-slip, $\mathbf{u}=0$) a inlet ($\mathbf{u}=U_{in}$) je
+hodnota na hranici známá. Difúzní člen na hraniční stěně používá vzdálenost
+<strong>poloviny buňky</strong> (střed buňky → stěna):</p>
+<p>$$\nu\frac{A}{\Delta x/2}(\phi_{stěna} - \phi_P)$$</p>
+<p>Koeficient je tedy dvojnásobný ($g_b = \nu A/(0{,}5\,\Delta x)$). V kódu:</p>
+<div class="highlight"><pre><span></span><code><span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">gbx</span><span class="p">;</span><span class="w">                       </span><span class="c1">// přidá do diagonály</span>
+<span class="n">eq</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">gbx</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">Uin</span><span class="p">;</span><span class="w">                </span><span class="c1">// známá hodnota → do zdroje</span>
+</code></pre></div>
+
+<p>Pro no-slip ($\mathbf{u}=0$) zdrojový člen vypadne (násobí se nulou), zůstane jen
+příspěvek do diagonály.</p>
+<h3 id="inlet-i-konvektivni-tok">Inlet — i konvektivní tok<a class="headerlink" href="#inlet-i-konvektivni-tok" title="Permanent link">&para;</a></h3>
+<p>Na vstupu je znám i tok ($U_{in} \cdot A_x$), takže do zdroje přibude i
+konvektivní příspěvek:</p>
+<div class="highlight"><pre><span></span><code><span class="n">eq</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">gbx</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">Uin</span><span class="p">;</span><span class="w">          </span><span class="c1">// difúze ze vstupu</span>
+<span class="n">eq</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">U_in</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">Ax</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">Uin</span><span class="p">;</span><span class="w">  </span><span class="c1">// konvekce ze vstupu</span>
+</code></pre></div>
+
+<h2 id="neumannova-podminka-predepsany-gradient">Neumannova podmínka (předepsaný gradient)<a class="headerlink" href="#neumannova-podminka-predepsany-gradient" title="Permanent link">&para;</a></h2>
+<p><strong>Outlet pro rychlost</strong> ($\partial\mathbf{u}/\partial n = 0$): rychlost na výstupu
+se nemění → stěna nepřispívá k difúzi, jen ke konvekci (odtok). Tekutina volně
+odtéká.</p>
+<p><strong>Stěny/inlet pro tlak</strong> ($\partial p/\partial n = 0$): tlak nemá normálový
+gradient → příslušná stěna do tlakové matice <strong>nepřispívá vůbec</strong>. V kódu se ten
+směr prostě přeskočí.</p>
+<h2 id="outlet-pro-tlak-dirichlet-p-0">Outlet pro tlak — Dirichlet p = 0<a class="headerlink" href="#outlet-pro-tlak-dirichlet-p-0" title="Permanent link">&para;</a></h2>
+<p>Tlak na výstupu je ukotven na nulu (referenční hodnota). To zároveň <strong>odstraňuje
+singularitu</strong> tlakové rovnice: čistě Neumannův problém (tlak všude jen
+gradientem) má řešení určené až na konstantu. Ukotvení $p=0$ na výstupu udělá
+soustavu jednoznačnou.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// outlet: Dirichlet p_stěna = 0, vzdálenost dx/2</span>
+<span class="kt">double</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rAU</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">Ax</span><span class="o">/</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">m</span><span class="p">.</span><span class="n">dx</span><span class="p">);</span>
+<span class="n">L</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">g</span><span class="p">;</span><span class="w">   </span><span class="c1">// src += g*0 = 0</span>
+</code></pre></div>
+
+<h2 id="krychle-jako-vnitrni-hranice">Krychle jako vnitřní hranice<a class="headerlink" href="#krychle-jako-vnitrni-hranice" title="Permanent link">&para;</a></h2>
+<p>Buňky uvnitř krychle nejsou součástí výpočtu. V matici dostanou <strong>identitu</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w"> </span><span class="k">continue</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// → U = 0, p = 0</span>
+</code></pre></div>
+
+<p>Tekutinová buňka sousedící s pevnou buňkou s ní zachází jako s no-slip
+Dirichletovou stěnou (difúze přes půl buňky, žádný tok). Tím vznikne přirozeně
+povrch krychle s nulovou rychlostí.</p>
+<div class="admonition note">
+<p class="admonition-title">Rohy a hrany krychle</p>
+<p>Tekutinová buňka v rohu sousedí s pevnými buňkami ze 2–3 stran a dostane
+příspěvek $g_b$ z každé z nich. Je to fyzikálně správné — buňka „cítí" stěnu
+z více směrů a její rychlost je silněji tlačena k nule.</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="theory__05-rhie-chow.html">
+        ← 5. Rhie–Chow interpolace</a>
+    
+    
+      <a class="next" href="theory__07-linear-system.html">
+        7. Řídké matice a stencil →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

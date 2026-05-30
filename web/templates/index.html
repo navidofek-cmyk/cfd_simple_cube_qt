@@ -28,7 +28,7 @@
 <h3>{{ group }}</h3>
 {% for s, m in items %}
 <div class="card">
-  <h4><a href="/file/{{ s }}">{{ m.title }}</a></h4>
+  <h4><a href="{{ url('file', s) }}">{{ m.title }}</a></h4>
   <p>{{ m.summary }} <br><em>{{ m.role }}</em></p>
 </div>
 {% endfor %}

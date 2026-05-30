@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIMPLE smyčka krok po kroku — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="active">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#simple-smycka-krok-po-kroku">SIMPLE smyčka krok po kroku</a><ul>
+<li><a href="#schema-jedne-iterace">Schéma jedné iterace</a></li>
+<li><a href="#krok-za-krokem">Krok za krokem</a><ul>
+<li><a href="#13-prediktor-rychlosti">1–3. Prediktor rychlosti</a></li>
+<li><a href="#4-operatory-a-a-hbya">4. Operátory A a HbyA</a></li>
+<li><a href="#5-toky-z-hbya-prvni-pulka-rhiechow">5. Toky z HbyA (první půlka Rhie–Chow)</a></li>
+<li><a href="#67-tlakova-rovnice">6–7. Tlaková rovnice</a></li>
+<li><a href="#8-rhiechow-korekce-toku-druha-pulka">8. Rhie–Chow korekce toků (druhá půlka)</a></li>
+<li><a href="#910-korekce-rychlosti-a-tlaku">9–10. Korekce rychlosti a tlaku</a></li>
+<li><a href="#11-reziduum-a-diagnostika">11. Reziduum a diagnostika</a></li>
+</ul>
+</li>
+<li><a href="#proc-prave-toto-poradi">Proč právě toto pořadí</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="simple-smycka-krok-po-kroku">SIMPLE smyčka krok po kroku<a class="headerlink" href="#simple-smycka-krok-po-kroku" title="Permanent link">&para;</a></h1>
+<p>Tato stránka spojuje teorii a kód — projde jednu iteraci <code>ChannelSolver::solve()</code>
+a ukáže, který řádek dělá který krok algoritmu.</p>
+<h2 id="schema-jedne-iterace">Schéma jedné iterace<a class="headerlink" href="#schema-jedne-iterace" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>        ┌─────────────────────────────────────────────┐
+        │  Uprev = U          (záloha pro ΔU)          │
+        ├─────────────────────────────────────────────┤
+   1.   │  buildUEqn  →  fvMatrix&lt;Vec3&gt;  (hybnost)     │
+   2.   │  UEqn.relax(αU)                              │
+   3.   │  solveWithExtra(∇p, −V, 40)  →  U*  (Jacobi) │
+        ├─────────────────────────────────────────────┤
+   4.   │  A = UEqn.A();  HbyA = H/A                   │
+   5.   │  interpFlux  →  toky pE,pN,pF z HbyA         │
+        ├─────────────────────────────────────────────┤
+   6.   │  buildPEqn  →  fvMatrix&lt;double&gt;  (tlak)      │
+   7.   │  cgSolve  →  p   (Conjugate Gradient)        │
+        ├─────────────────────────────────────────────┤
+   8.   │  Rhie–Chow korekce toků phiE,phiN,phiF       │
+   9.   │  U = HbyA − rAU·∇p   (korekce rychlosti)     │
+  10.   │  p = pOld + αP·(p − pOld)  (podrelaxace)      │
+        ├─────────────────────────────────────────────┤
+  11.   │  reziduum + ΔU/ΔP → convergence.dat          │
+        └─────────────────────────────────────────────┘
+                         opakuj dokud cont/cont₀ &gt; tol
+</code></pre></div>
+
+<h2 id="krok-za-krokem">Krok za krokem<a class="headerlink" href="#krok-za-krokem" title="Permanent link">&para;</a></h2>
+<h3 id="13-prediktor-rychlosti">1–3. Prediktor rychlosti<a class="headerlink" href="#13-prediktor-rychlosti" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">auto</span><span class="w"> </span><span class="n">UEqn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buildUEqn</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">phiE</span><span class="p">,</span><span class="n">phiN</span><span class="p">,</span><span class="n">phiF</span><span class="p">,</span><span class="w"> </span><span class="n">nu</span><span class="p">,</span><span class="n">U_in</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">);</span><span class="w">  </span><span class="c1">// sestav matici</span>
+<span class="n">UEqn</span><span class="p">.</span><span class="n">relax</span><span class="p">(</span><span class="n">alphaU</span><span class="p">);</span><span class="w">                                     </span><span class="c1">// implicitní podrelaxace</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">gp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gradP</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span><span class="w">                                  </span><span class="c1">// gradient STARÉHO tlaku</span>
+<span class="n">UEqn</span><span class="p">.</span><span class="n">solveWithExtra</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">m</span><span class="p">.</span><span class="n">V</span><span class="p">,</span><span class="w"> </span><span class="mi">40</span><span class="p">);</span><span class="w">                      </span><span class="c1">// vyřeš → U*</span>
+</code></pre></div>
+
+<p>Vyřeší hybnost se starým tlakem. Výsledek <code>U*</code> obecně <strong>nesplňuje kontinuitu</strong> —
+to napraví tlaková korekce. Matematicky viz <a href="theory__04-simple.html">SIMPLE</a>,
+kód <a href="cpp__06-simple.html">Simple.cpp</a>.</p>
+<h3 id="4-operatory-a-a-hbya">4. Operátory A a HbyA<a class="headerlink" href="#4-operatory-a-a-hbya" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">volScalar</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UEqn</span><span class="p">.</span><span class="n">A</span><span class="p">();</span><span class="w">      </span><span class="c1">// a_P / V</span>
+<span class="n">volVector</span><span class="w"> </span><span class="n">Hf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UEqn</span><span class="p">.</span><span class="n">H</span><span class="p">();</span><span class="w">     </span><span class="c1">// (src − Σ a_nb·u_nb)/V</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span><span class="o">++</span><span class="n">c</span><span class="p">){</span>
+<span class="w">    </span><span class="n">rAU</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="mf">1.0</span><span class="o">/</span><span class="n">A</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w">         </span><span class="c1">// 1/a_P</span>
+<span class="w">    </span><span class="n">HbyA</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">rAU</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">Hf</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w">    </span><span class="c1">// HbyA = H/A</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><code>HbyA</code> je rychlost vyjádřená bez tlakového členu — vstup do tlakové rovnice.</p>
+<h3 id="5-toky-z-hbya-prvni-pulka-rhiechow">5. Toky z HbyA (první půlka Rhie–Chow)<a class="headerlink" href="#5-toky-z-hbya-prvni-pulka-rhiechow" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">interpFlux</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">HbyA</span><span class="p">,</span><span class="w"> </span><span class="n">pE</span><span class="p">,</span><span class="n">pN</span><span class="p">,</span><span class="n">pF2</span><span class="p">);</span><span class="w">   </span><span class="c1">// interpolace HbyA na stěny</span>
+</code></pre></div>
+
+<h3 id="67-tlakova-rovnice">6–7. Tlaková rovnice<a class="headerlink" href="#67-tlakova-rovnice" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">auto</span><span class="w"> </span><span class="n">pEqn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buildPEqn</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">rAU</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span><span class="w">          </span><span class="c1">// Laplaceův operátor</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">divH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">divFlux</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">pE</span><span class="p">,</span><span class="n">pN</span><span class="p">,</span><span class="n">pF2</span><span class="p">,</span><span class="w"> </span><span class="n">U_in</span><span class="p">);</span><span class="w">   </span><span class="c1">// pravá strana = div(HbyA)</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">pEqn</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">divH</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="n">cgSolve</span><span class="p">(</span><span class="n">pEqn</span><span class="p">,</span><span class="w"> </span><span class="n">cgWork</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-6</span><span class="p">);</span><span class="w">          </span><span class="c1">// vyřeš tlak metodou CG</span>
+</code></pre></div>
+
+<p>Nejdražší krok — tlaková Poissonova rovnice se řeší přesně každou iteraci přes
+<a href="theory__08-cg.html">Conjugate Gradient</a>.</p>
+<h3 id="8-rhiechow-korekce-toku-druha-pulka">8. Rhie–Chow korekce toků (druhá půlka)<a class="headerlink" href="#8-rhiechow-korekce-toku-druha-pulka" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">phiE</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pE</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">rf</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">e</span><span class="p">)</span><span class="o">*</span><span class="n">m</span><span class="p">.</span><span class="n">Ax</span><span class="o">/</span><span class="n">m</span><span class="p">.</span><span class="n">dx</span><span class="o">*</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">e</span><span class="p">]</span><span class="o">-</span><span class="n">p</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span>
+</code></pre></div>
+
+<p>Toky se opraví o tlakový gradient mezi sousedy → divergence-free. Viz
+<a href="theory__05-rhie-chow.html">Rhie–Chow</a>. Tyto <code>phiE</code> se použijí v reziduu i v
+příští hybnostní rovnici.</p>
+<h3 id="910-korekce-rychlosti-a-tlaku">9–10. Korekce rychlosti a tlaku<a class="headerlink" href="#910-korekce-rychlosti-a-tlaku" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">U</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">HbyA</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">rAU</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">gpn</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w">          </span><span class="c1">// dosadí vyřešený tlak</span>
+<span class="n">p</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">pOld</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">alphaP</span><span class="o">*</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">pOld</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span><span class="w">  </span><span class="c1">// podrelaxace tlaku</span>
+</code></pre></div>
+
+<h3 id="11-reziduum-a-diagnostika">11. Reziduum a diagnostika<a class="headerlink" href="#11-reziduum-a-diagnostika" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">resField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">divFlux</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">phiE</span><span class="p">,</span><span class="n">phiN</span><span class="p">,</span><span class="n">phiF</span><span class="p">,</span><span class="w"> </span><span class="n">U_in</span><span class="p">);</span><span class="w">   </span><span class="c1">// div(U) po korekci</span>
+<span class="n">cont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Σ</span><span class="o">|</span><span class="n">resField</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">|</span><span class="p">;</span><span class="w">                          </span><span class="c1">// L1 norma</span>
+<span class="c1">// + ΔU/ΔP, zápis do convergence.dat</span>
+<span class="k">if</span><span class="p">(</span><span class="n">cont</span><span class="o">/</span><span class="n">contInit</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tol</span><span class="p">)</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w">                  </span><span class="c1">// konvergence?</span>
+</code></pre></div>
+
+<h2 id="proc-prave-toto-poradi">Proč právě toto pořadí<a class="headerlink" href="#proc-prave-toto-poradi" title="Permanent link">&para;</a></h2>
+<p>SIMPLE je <strong>prediktor–korektor</strong>: nejdřív odhad rychlosti (1–3), pak tlak, který
+ten odhad opraví do kontinuity (4–9). Pořadí je nutné — tlaková rovnice
+potřebuje <code>HbyA</code> z hybnostní rovnice, korekce rychlosti potřebuje vyřešený tlak.
+Iterace se opakuje, protože hybnost a tlak jsou provázané (nelineární vazba přes
+konvekci).</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="cpp__09-language.html">
+        ← Použité prvky C++ (reference)</a>
+    
+    
+      <a class="next" href="solver__02-running.html">
+        Spuštění a parametry →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

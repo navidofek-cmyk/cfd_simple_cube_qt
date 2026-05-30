@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conjugate Gradient solver — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="active">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#conjugate-gradient-solver">Conjugate Gradient solver</a><ul>
+<li><a href="#proc-cg-na-tlak">Proč CG na tlak</a></li>
+<li><a href="#znamenkovy-obrat-spd">Znaménkový obrat: SPD</a></li>
+<li><a href="#algoritmus">Algoritmus</a></li>
+<li><a href="#stavebni-bloky-vse-paralelni">Stavební bloky (vše paralelní)</a></li>
+<li><a href="#predalokovany-workspace">Předalokovaný workspace</a></li>
+<li><a href="#kriterium-ukonceni">Kritérium ukončení</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="conjugate-gradient-solver">Conjugate Gradient solver<a class="headerlink" href="#conjugate-gradient-solver" title="Permanent link">&para;</a></h1>
+<p>Tlaková Poissonova rovnice se řeší <strong>metodou sdružených gradientů</strong> (CG) — což
+je nejefektivnější iterační metoda pro symetrické pozitivně definitní (SPD)
+soustavy.</p>
+<h2 id="proc-cg-na-tlak">Proč CG na tlak<a class="headerlink" href="#proc-cg-na-tlak" title="Permanent link">&para;</a></h2>
+<p>Tlaková matice je:
+- <strong>symetrická</strong> (Laplaceův operátor je samosdružený),
+- <strong>řídká</strong> (7bodový stencil).</p>
+<p>To je přesně doména CG. Oproti Gauss–Seidelu konverguje řádově rychleji
+($O(\sqrt{\kappa})$ iterací místo $O(\kappa)$, kde $\kappa$ je číslo
+podmíněnosti).</p>
+<h2 id="znamenkovy-obrat-spd">Znaménkový obrat: SPD<a class="headerlink" href="#znamenkovy-obrat-spd" title="Permanent link">&para;</a></h2>
+<p>Diskrétní Laplacián má v naší konvenci <strong>zápornou</strong> diagonálu ($a_P &lt; 0$,
+mimodiagonály $&gt; 0$) → je <em>negativně</em> semidefinitní. CG ale vyžaduje
+<strong>pozitivně</strong> definitní matici. Řešíme proto ekvivalentní soustavu:</p>
+<p>$$(-\mathbf{A})\,\mathbf{x} = -\mathbf{b}$$</p>
+<p>kde $(-\mathbf{A})$ je už pozitivně semidefinitní. V kódu to dělá lambda <code>negAv</code>
+(násobení vektorem maticí $-\mathbf{A}$).</p>
+<h2 id="algoritmus">Algoritmus<a class="headerlink" href="#algoritmus" title="Permanent link">&para;</a></h2>
+<p>Hledáme $\mathbf{x}$ minimalizací kvadratické formy. Iterace:</p>
+<p>$$
+\begin{aligned}
+\alpha_k &amp;= \frac{\mathbf{r}<em k_1="k+1">k^T\mathbf{r}_k}{\mathbf{d}_k^T(-\mathbf{A})\mathbf{d}_k} &amp; \text{(délka kroku)}\
+\mathbf{x}</em>} &amp;= \mathbf{x<em k_1="k+1">k + \alpha_k\,\mathbf{d}_k &amp; \text{(aktualizace řešení)}\
+\mathbf{r}</em>} &amp;= \mathbf{r<em k_1="k+1">k - \alpha_k\,(-\mathbf{A})\mathbf{d}_k &amp; \text{(nové reziduum)}\
+\beta_k &amp;= \frac{\mathbf{r}</em>}^T\mathbf{r<em k_1="k+1">{k+1}}{\mathbf{r}_k^T\mathbf{r}_k} &amp; \text{(Gram–Schmidt koef.)}\
+\mathbf{d}</em>
+\end{aligned}
+$$} &amp;= \mathbf{r}_{k+1} + \beta_k\,\mathbf{d}_k &amp; \text{(nový sdružený směr)</p>
+<p>Klíčová myšlenka: směry $\mathbf{d}_k$ jsou <strong>vzájemně sdružené</strong> vzhledem k
+matici ($\mathbf{d}_i^T\mathbf{A}\mathbf{d}_j = 0$ pro $i\neq j$), takže každý
+krok řeší jednu „nezávislou dimenzi" a v přesné aritmetice CG konverguje
+nejvýše v $N$ krocích.</p>
+<h2 id="stavebni-bloky-vse-paralelni">Stavební bloky (vše paralelní)<a class="headerlink" href="#stavebni-bloky-vse-paralelni" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Operace</th>
+<th>Co</th>
+<th>Paralelizace</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>negAv</code></td>
+<td>maticový součin $(-\mathbf{A})\mathbf{v}$</td>
+<td><code>parallel for collapse(3)</code></td>
+</tr>
+<tr>
+<td>skalární součin</td>
+<td>$\mathbf{r}^T\mathbf{r}$, $\mathbf{d}^T\mathbf{Ap}$</td>
+<td><code>parallel for reduction(+)</code></td>
+</tr>
+<tr>
+<td>AXPY</td>
+<td>$\mathbf{x} += \alpha\mathbf{d}$</td>
+<td><code>parallel for</code></td>
+</tr>
+</tbody>
+</table>
+<p>Násobení maticí vektorem nepotřebuje uloženou matici — projde sousedy přímo
+přes pole <code>aP, aE, ...</code>. Viz <a href="cpp__05-cgsolver.html">CgSolver.hpp</a>.</p>
+<h2 id="predalokovany-workspace">Předalokovaný workspace<a class="headerlink" href="#predalokovany-workspace" title="Permanent link">&para;</a></h2>
+<p>CG potřebuje 5 pomocných vektorů délky $N$ (<code>b, Ax, r, dir, Ap</code>). Aby se
+nealokovaly při každém z ~1000 volání za běh, drží se v
+<code>CgWorkspace</code> jako member solveru a předávají se:</p>
+<div class="highlight"><pre><span></span><code><span class="n">cgSolve</span><span class="p">(</span><span class="n">pEqn</span><span class="p">,</span><span class="w"> </span><span class="n">cgWork</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-6</span><span class="p">);</span>
+</code></pre></div>
+
+<p>To je <strong>RAII + objektový pool</strong> vzor — paměť žije po dobu života solveru, ne
+jedné iterace.</p>
+<h2 id="kriterium-ukonceni">Kritérium ukončení<a class="headerlink" href="#kriterium-ukonceni" title="Permanent link">&para;</a></h2>
+<p>CG zastaví, když relativní reziduum klesne pod toleranci:</p>
+<p>$$\frac{|\mathbf{r}_k|}{|\mathbf{r}_0|} &lt; 10^{-6}$$</p>
+<p>nebo po dosažení <code>maxIter</code> (1000). Pro dobře podmíněnou tlakovou matici stačí
+typicky desítky až stovky iterací.</p>
+<div class="admonition tip">
+<p class="admonition-title">Možné vylepšení</p>
+<p>Bez předpodmínění (preconditioneru) roste počet CG iterací s jemností sítě.
+Přidání Jacobi nebo neúplného Choleského předpodmínění (ICC) by výrazně
+zrychlilo konvergenci na velkých sítích. To je přirozený další krok.</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="theory__07-linear-system.html">
+        ← 7. Řídké matice a stencil</a>
+    
+    
+      <a class="next" href="theory__09-parallel.html">
+        9. Paralelizace (OpenMP) →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

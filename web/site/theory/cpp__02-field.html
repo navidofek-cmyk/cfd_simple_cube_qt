@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Field.hpp — šablony a kontejnery — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="active">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#fieldhpp-sablony-a-kontejnery">Field.hpp — šablony a kontejnery</a><ul>
+<li><a href="#cely-soubor">Celý soubor</a></li>
+<li><a href="#jazykove-prvky">Jazykové prvky</a><ul>
+<li><a href="#sablona-tridy">Šablona třídy</a></li>
+<li><a href="#stdvectort">std::vector&lt;T&gt;</a></li>
+<li><a href="#explicit-konstruktor">explicit konstruktor</a></li>
+<li><a href="#dve-verze-operator">Dvě verze operator[]</a></li>
+<li><a href="#type-aliasy">Type aliasy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="fieldhpp-sablony-a-kontejnery">Field.hpp — šablony a kontejnery<a class="headerlink" href="#fieldhpp-sablony-a-kontejnery" title="Permanent link">&para;</a></h1>
+<p><code>Field&lt;T&gt;</code> je tenká obálka nad <code>std::vector&lt;T&gt;</code> reprezentující buňkové pole.
+Ukazuje <strong>šablony tříd</strong>, <code>std::vector</code> a <strong>type aliasy</strong>.</p>
+<h2 id="cely-soubor">Celý soubor<a class="headerlink" href="#cely-soubor" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="cp">#pragma once</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Vec3.hpp&quot;</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Field</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Field</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span>
+<span class="w">    </span><span class="k">explicit</span><span class="w"> </span><span class="n">Field</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">T</span><span class="p">{})</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">d</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="n">T</span><span class="o">&amp;</span><span class="w">       </span><span class="k">operator</span><span class="p">[](</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w">       </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="p">[](</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">d</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">using</span><span class="w"> </span><span class="n">volScalar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="n">volVector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">Vec3</span><span class="o">&gt;</span><span class="p">;</span>
+</code></pre></div>
+
+<h2 id="jazykove-prvky">Jazykové prvky<a class="headerlink" href="#jazykove-prvky" title="Permanent link">&para;</a></h2>
+<h3 id="sablona-tridy">Šablona třídy<a class="headerlink" href="#sablona-tridy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Field</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">d</span><span class="p">;</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
+</code></pre></div>
+
+<p><code>T</code> je typový parametr. Z jedné definice překladač vygeneruje konkrétní typy
+podle použití — <code>Field&lt;double&gt;</code> a <code>Field&lt;Vec3&gt;</code>. Tomu se říká <strong>generické
+programování</strong>: kód napsaný jednou, funguje pro libovolný typ s potřebnými
+operacemi.</p>
+<h3 id="stdvectort"><code>std::vector&lt;T&gt;</code><a class="headerlink" href="#stdvectort" title="Permanent link">&para;</a></h3>
+<p>Dynamické pole z STL. Samo spravuje paměť (alokace, dealokace, růst) —
+<strong>RAII</strong>: když <code>Field</code> zanikne, <code>vector</code> automaticky uvolní svou paměť. Žádné
+ruční <code>new</code>/<code>delete</code>.</p>
+<h3 id="explicit-konstruktor"><code>explicit</code> konstruktor<a class="headerlink" href="#explicit-konstruktor" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">explicit</span><span class="w"> </span><span class="n">Field</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">T</span><span class="p">{})</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">d</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+</code></pre></div>
+
+<ul>
+<li><code>explicit</code> zabrání nechtěné implicitní konverzi — <code>Field&lt;double&gt; f = 5;</code> se
+  nepřeloží, musí se <code>Field&lt;double&gt; f(5);</code>. Brání chybám.</li>
+<li><code>T v = T{}</code> — <strong>výchozí argument</strong> s <strong>value-initialization</strong> <code>T{}</code>
+  (<code>0.0</code> pro double, <code>{0,0,0}</code> pro Vec3).</li>
+<li><code>: d(n, v)</code> — inicializační seznam vytvoří vektor délky <code>n</code> vyplněný hodnotou
+  <code>v</code>.</li>
+</ul>
+<h3 id="dve-verze-operator">Dvě verze <code>operator[]</code><a class="headerlink" href="#dve-verze-operator" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">T</span><span class="o">&amp;</span><span class="w">       </span><span class="k">operator</span><span class="p">[](</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w">       </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// pro úpravu</span>
+<span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="k">operator</span><span class="p">[](</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// pro čtení z const objektu</span>
+</code></pre></div>
+
+<p><strong>Const overloading</strong>: nekonstantní verze vrací referenci pro zápis
+(<code>U[c] = ...</code>), konstantní verze (volaná na <code>const Field&amp;</code>) vrací
+<code>const T&amp;</code> jen pro čtení. Umožňuje předávat pole jako <code>const Field&lt;T&gt;&amp;</code> tam, kde
+je nemáme měnit (např. v <code>interpFlux</code>).</p>
+<h3 id="type-aliasy">Type aliasy<a class="headerlink" href="#type-aliasy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">using</span><span class="w"> </span><span class="n">volScalar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">;</span><span class="w">   </span><span class="c1">// skalární pole (tlak, reziduum)</span>
+<span class="k">using</span><span class="w"> </span><span class="n">volVector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">Vec3</span><span class="o">&gt;</span><span class="p">;</span><span class="w">     </span><span class="c1">// vektorové pole (rychlost)</span>
+</code></pre></div>
+
+<p><code>using</code> (moderní náhrada za <code>typedef</code>) dává čitelná jména. Název <code>vol*</code>
+navazuje na konvenci OpenFOAM (<code>volScalarField</code>, <code>volVectorField</code>) — „vol" =
+veličina definovaná na objemech (buňkách).</p>
+<div class="admonition note">
+<p class="admonition-title">Proč obálka, ne přímo std::vector</p>
+<p>Field by mohl být jen <code>std::vector</code>, ale tenká obálka dává:
+(1) sémantický typ <code>volScalar</code>/<code>volVector</code>,
+(2) <code>int size()</code> místo <code>size_t</code> (méně varování při
+porovnání se znaménkovými indexy ve smyčkách),
+(3) prostor pro budoucí rozšíření (např. okrajové hodnoty) beze změny volajícího
+kódu.</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="cpp__01-vec3.html">
+        ← Vec3.hpp — vektor a operátory</a>
+    
+    
+      <a class="next" href="cpp__03-mesh.html">
+        Mesh.hpp — síť a maska →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

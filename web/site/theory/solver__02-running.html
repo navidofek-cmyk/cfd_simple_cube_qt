@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spuštění a parametry — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="active">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#spusteni-a-parametry">Spuštění a parametry</a><ul>
+<li><a href="#preklad">Překlad</a></li>
+<li><a href="#spusteni">Spuštění</a></li>
+<li><a href="#parametry-v-maincpp">Parametry v main.cpp</a><ul>
+<li><a href="#volba-velikosti-site">Volba velikosti sítě</a></li>
+<li><a href="#volitelne-nastaveni">Volitelné nastavení</a></li>
+</ul>
+</li>
+<li><a href="#vystupni-soubory">Výstupní soubory</a></li>
+<li><a href="#reynoldsovo-cislo-co-zkusit">Reynoldsovo číslo — co zkusit</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="spusteni-a-parametry">Spuštění a parametry<a class="headerlink" href="#spusteni-a-parametry" title="Permanent link">&para;</a></h1>
+<p>Jak řešič přeložit, spustit a co lze nastavit.</p>
+<h2 id="preklad">Překlad<a class="headerlink" href="#preklad" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>cfd_simple_cube
+make
+</code></pre></div>
+
+<p><code>Makefile</code> přeloží s <code>-O2 -std=c++20 -Wall -fopenmp</code>. Automaticky najde všechny
+<code>src/*.cpp</code>, přeloží na objektové soubory a slinkuje do <code>channelCube</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">CXXFLAGS</span><span class="w"> </span><span class="o">?=</span><span class="w"> </span>-O2<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-Wall<span class="w"> </span>-Iinclude<span class="w"> </span>-fopenmp
+<span class="nv">SRC</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">$(</span>wildcard<span class="w"> </span>src/*.cpp<span class="k">)</span>
+<span class="nv">OBJ</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">$(</span>SRC:.cpp<span class="o">=</span>.o<span class="k">)</span>
+<span class="nf">channelCube</span><span class="o">:</span><span class="w"> </span><span class="k">$(</span><span class="nv">OBJ</span><span class="k">)</span>
+<span class="w">    </span><span class="k">$(</span>CXX<span class="k">)</span><span class="w"> </span><span class="k">$(</span>CXXFLAGS<span class="k">)</span><span class="w"> </span>$^<span class="w"> </span>-o<span class="w"> </span><span class="nv">$@</span>
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Význam</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-O2</code></td>
+<td>optimalizace (klíčové pro výkon)</td>
+</tr>
+<tr>
+<td><code>-std=c++20</code></td>
+<td>jazykový standard</td>
+</tr>
+<tr>
+<td><code>-fopenmp</code></td>
+<td>zapne OpenMP paralelizaci</td>
+</tr>
+<tr>
+<td><code>-Iinclude</code></td>
+<td>kde hledat hlavičky</td>
+</tr>
+</tbody>
+</table>
+<h2 id="spusteni">Spuštění<a class="headerlink" href="#spusteni" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">6</span><span class="w"> </span>./channelCube
+</code></pre></div>
+
+<p><code>OMP_NUM_THREADS=6</code> omezí na 6 fyzických jader (ne 12 logických — viz
+<a href="theory__09-parallel.html">Paralelizace</a>).</p>
+<h2 id="parametry-v-maincpp">Parametry v main.cpp<a class="headerlink" href="#parametry-v-maincpp" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Parametr</th>
+<th>Výchozí</th>
+<th>Význam</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NX, NY, NZ</code></td>
+<td>320, 80, 80</td>
+<td>rozlišení sítě</td>
+</tr>
+<tr>
+<td><code>LX, LY, LZ</code></td>
+<td>4, 1, 1 m</td>
+<td>rozměry domény</td>
+</tr>
+<tr>
+<td><code>CX0..CZ1</code></td>
+<td>krychle</td>
+<td>hranice překážky</td>
+</tr>
+<tr>
+<td><code>RE</code></td>
+<td>20</td>
+<td>Reynoldsovo číslo</td>
+</tr>
+<tr>
+<td><code>U_IN</code></td>
+<td>1 m/s</td>
+<td>vstupní rychlost</td>
+</tr>
+<tr>
+<td><code>αU, αP</code></td>
+<td>0.7, 0.3</td>
+<td>podrelaxace rychlost/tlak</td>
+</tr>
+<tr>
+<td><code>maxIter</code></td>
+<td>dle běhu</td>
+<td>strop iterací</td>
+</tr>
+<tr>
+<td><code>tol</code></td>
+<td>dle běhu</td>
+<td>tolerance konvergence</td>
+</tr>
+</tbody>
+</table>
+<h3 id="volba-velikosti-site">Volba velikosti sítě<a class="headerlink" href="#volba-velikosti-site" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Síť</th>
+<th>Buněk</th>
+<th>Buněk/strana krychle</th>
+<th>Čas (6 jader)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>80×20×20</td>
+<td>32k</td>
+<td>4</td>
+<td>~3 s</td>
+</tr>
+<tr>
+<td>160×40×40</td>
+<td>256k</td>
+<td>8</td>
+<td>~minuty</td>
+</tr>
+<tr>
+<td>320×80×80</td>
+<td>2 mil.</td>
+<td>16</td>
+<td>desítky minut</td>
+</tr>
+</tbody>
+</table>
+<p>Jemnější síť = lepší rozlišení úplavu a hraničních vrstev, ale výrazně delší
+výpočet (počet buněk i počet SIMPLE iterací roste).</p>
+<h3 id="volitelne-nastaveni">Volitelné nastavení<a class="headerlink" href="#volitelne-nastaveni" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">sim</span><span class="p">.</span><span class="n">snapIters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">250</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="mi">400</span><span class="p">};</span><span class="w">           </span><span class="c1">// ulož pole v těchto iteracích</span>
+<span class="n">sim</span><span class="p">.</span><span class="n">convergencePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;convergence.dat&quot;</span><span class="p">;</span><span class="w">   </span><span class="c1">// živý zápis reziduí</span>
+<span class="n">sim</span><span class="p">.</span><span class="n">matrixExportPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;pmatrix.dat&quot;</span><span class="p">;</span><span class="w">      </span><span class="c1">// export tlakové matice (jen malé sítě)</span>
+</code></pre></div>
+
+<h2 id="vystupni-soubory">Výstupní soubory<a class="headerlink" href="#vystupni-soubory" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Soubor</th>
+<th>Obsah</th>
+<th>Pro</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>channel_cube.vtk</code></td>
+<td>3D pole U, p, solid</td>
+<td>ParaView</td>
+</tr>
+<tr>
+<td><code>fields.dat</code></td>
+<td>textová data všech buněk</td>
+<td>matplotlib</td>
+</tr>
+<tr>
+<td><code>mesh.dat</code></td>
+<td>geometrie sítě</td>
+<td><code>plot_mesh.py</code></td>
+</tr>
+<tr>
+<td><code>convergence.dat</code></td>
+<td>historie reziduí</td>
+<td><code>plot_convergence.py</code></td>
+</tr>
+<tr>
+<td><code>fields_NNNN.dat</code></td>
+<td>snapshoty polí</td>
+<td>porovnání iterací</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reynoldsovo-cislo-co-zkusit">Reynoldsovo číslo — co zkusit<a class="headerlink" href="#reynoldsovo-cislo-co-zkusit" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">RE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">20.0</span><span class="p">;</span><span class="w">   </span><span class="c1">// → změň na 40, 100, ...</span>
+</code></pre></div>
+
+<ul>
+<li><strong>Re = 20</strong> (výchozí) — ustálené, symetrické, ~110+ iterací</li>
+<li><strong>Re = 40–50</strong> — protáhlý úplav, na hraně stability</li>
+<li><strong>Re &gt; 150</strong> — vyžadovalo by časovou smyčku (von Kármánovy víry)</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Stagnace na jemné síti</p>
+<p>Na 2 mil. buňkách se relativní reziduum ustálí kolem 10⁻⁵ a dál neklesá
+(typické chování SIMPLE bez předpodmínění). Pro praktické účely je pole při
+10⁻⁵ plně konvergované — proto se používá tolerance ~2·10⁻⁵. Viz
+<a href="solver__03-validation.html">Validace</a>.</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="solver__01-loop.html">
+        ← SIMPLE smyčka krok po kroku</a>
+    
+    
+      <a class="next" href="solver__03-validation.html">
+        Validace a vizualizace →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

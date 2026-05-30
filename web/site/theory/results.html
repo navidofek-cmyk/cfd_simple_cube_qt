@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vizualizace výsledků — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="active">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#vizualizace-vysledku">Vizualizace výsledků</a><ul>
+<li><a href="#proudeni-rychlost-tlak-a-proudnice-rezy-xy-a-xz">Proudění — rychlost, tlak a proudnice (řezy XY a XZ)</a></li>
+<li><a href="#vypocetni-sit-a-poloha-krychle-v-tunelu">Výpočetní síť a poloha krychle v tunelu</a></li>
+<li><a href="#historie-konvergence-kontinuita-zmena-poli">Historie konvergence (kontinuita + změna polí)</a></li>
+<li><a href="#struktura-ridkych-matic-sparsity-pattern">Struktura řídkých matic (sparsity pattern)</a></li>
+<li><a href="#prostorove-rozlozeni-koeficientu-matic">Prostorové rozložení koeficientů matic</a></li>
+<li><a href="#husty-blok-matice-kolem-krychle-7bodovy-stencil">Hustý blok matice kolem krychle (7bodový stencil)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="vizualizace-vysledku">Vizualizace výsledků<a class="headerlink" href="#vizualizace-vysledku" title="Permanent link">&para;</a></h1>
+<p>Výstupy řešiče (Re = 20). Obrázky generují Python skripty (<code>plot_fields.py</code>, <code>plot_mesh.py</code>, <code>plot_convergence.py</code>, <code>plot_matrix.py</code>) z dat řešiče.</p>
+<h2 id="proudeni-rychlost-tlak-a-proudnice-rezy-xy-a-xz">Proudění — rychlost, tlak a proudnice (řezy XY a XZ)<a class="headerlink" href="#proudeni-rychlost-tlak-a-proudnice-rezy-xy-a-xz" title="Permanent link">&para;</a></h2>
+<p><img alt="Proudění — rychlost, tlak a proudnice (řezy XY a XZ)" src="img/flow_visualization.png" /></p>
+<h2 id="vypocetni-sit-a-poloha-krychle-v-tunelu">Výpočetní síť a poloha krychle v tunelu<a class="headerlink" href="#vypocetni-sit-a-poloha-krychle-v-tunelu" title="Permanent link">&para;</a></h2>
+<p><img alt="Výpočetní síť a poloha krychle v tunelu" src="img/mesh_visualization.png" /></p>
+<h2 id="historie-konvergence-kontinuita-zmena-poli">Historie konvergence (kontinuita + změna polí)<a class="headerlink" href="#historie-konvergence-kontinuita-zmena-poli" title="Permanent link">&para;</a></h2>
+<p><img alt="Historie konvergence (kontinuita + změna polí)" src="img/convergence.png" /></p>
+<h2 id="struktura-ridkych-matic-sparsity-pattern">Struktura řídkých matic (sparsity pattern)<a class="headerlink" href="#struktura-ridkych-matic-sparsity-pattern" title="Permanent link">&para;</a></h2>
+<p><img alt="Struktura řídkých matic (sparsity pattern)" src="img/matrix_sparsity.png" /></p>
+<h2 id="prostorove-rozlozeni-koeficientu-matic">Prostorové rozložení koeficientů matic<a class="headerlink" href="#prostorove-rozlozeni-koeficientu-matic" title="Permanent link">&para;</a></h2>
+<p><img alt="Prostorové rozložení koeficientů matic" src="img/matrix_coefficients.png" /></p>
+<h2 id="husty-blok-matice-kolem-krychle-7bodovy-stencil">Hustý blok matice kolem krychle (7bodový stencil)<a class="headerlink" href="#husty-blok-matice-kolem-krychle-7bodovy-stencil" title="Permanent link">&para;</a></h2>
+<p><img alt="Hustý blok matice kolem krychle (7bodový stencil)" src="img/matrix_dense_block.png" /></p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="solver__03-validation.html">
+        ← Validace a vizualizace</a>
+    
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

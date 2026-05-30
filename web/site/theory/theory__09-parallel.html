@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paralelizace (OpenMP) — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="active">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#paralelizace-openmp">Paralelizace (OpenMP)</a><ul>
+<li><a href="#proc-openmp-a-ne-asyncvlakna">Proč OpenMP a ne async/vlákna</a></li>
+<li><a href="#hlavni-prekazka-race-condition">Hlavní překážka: race condition</a><ul>
+<li><a href="#1-sestaveni-konvekce-race">1. Sestavení konvekce (race)</a></li>
+<li><a href="#2-gaussseidel-je-seriovy">2. Gauss–Seidel je sériový</a></li>
+</ul>
+</li>
+<li><a href="#redukce-pro-skalarni-soucty">Redukce pro skalární součty</a></li>
+<li><a href="#namerene-zrychleni">Naměřené zrychlení</a></li>
+<li><a href="#proc-ne-idealnich-6">Proč ne ideálních 6×</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="paralelizace-openmp">Paralelizace (OpenMP)<a class="headerlink" href="#paralelizace-openmp" title="Permanent link">&para;</a></h1>
+<p>Na 2 milionech buněk je sériový výpočet neúnosný (přes hodinu). Paralelizace přes
+<strong>OpenMP</strong> dala <strong>4,2× zrychlení</strong> na 6 jádrech.</p>
+<h2 id="proc-openmp-a-ne-asyncvlakna">Proč OpenMP a ne async/vlákna<a class="headerlink" href="#proc-openmp-a-ne-asyncvlakna" title="Permanent link">&para;</a></h2>
+<p>Jde o <strong>datovou paralelizaci</strong> — stejná operace na milionech nezávislých buněk.
+To je doména OpenMP (<code>#pragma omp parallel for</code>), ne <code>std::async</code>/<code>std::thread</code>
+(ty se hodí na <em>úlohovou</em> paralelizaci, např. počítat víc různých Re najednou).</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#pragma omp parallel for collapse(3)</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">k</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nz</span><span class="p">;</span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">ny</span><span class="p">;</span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">){</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// buňky se rozdělí mezi vlákna</span>
+</code></pre></div>
+
+<p><code>collapse(3)</code> sloučí tři vnořené smyčky do jedné velké iterační domény, kterou
+OpenMP rovnoměrně rozdělí mezi vlákna.</p>
+<h2 id="hlavni-prekazka-race-condition">Hlavní překážka: race condition<a class="headerlink" href="#hlavni-prekazka-race-condition" title="Permanent link">&para;</a></h2>
+<p>Naivní paralelizace selže na dvou místech.</p>
+<h3 id="1-sestaveni-konvekce-race">1. Sestavení konvekce (race)<a class="headerlink" href="#1-sestaveni-konvekce-race" title="Permanent link">&para;</a></h3>
+<p>Původní stěnový přístup: každá stěna zapisovala do <strong>dvou</strong> buněk:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// ŠPATNĚ paralelně: dvě vlákna můžou psát do téže buňky</span>
+<span class="k">if</span><span class="p">(</span><span class="n">f</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">){</span><span class="w"> </span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">f</span><span class="p">;</span><span class="w"> </span><span class="n">aW</span><span class="p">[</span><span class="n">e</span><span class="p">]</span><span class="o">+=-</span><span class="n">f</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// píše do c i do e</span>
+</code></pre></div>
+
+<p><strong>Řešení — buňkový přístup</strong>: každá buňka spočítá všechny své příspěvky sama,
+sousedy jen <em>čte</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// západní stěna: tok si přečtu ze sousedovy phiE</span>
+<span class="kt">double</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">phiE</span><span class="p">[</span><span class="n">w</span><span class="p">];</span><span class="w">               </span><span class="c1">// jen ČTENÍ</span>
+<span class="k">if</span><span class="p">(</span><span class="n">f</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">f</span><span class="p">;</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">aW</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">f</span><span class="p">;</span><span class="w">  </span><span class="c1">// zápis JEN do c</span>
+</code></pre></div>
+
+<p>Žádné zápisy do sousedů → žádný race → bezpečné. Detaily v
+<a href="theory__03-convection.html">Konvekce</a> a <a href="cpp__06-simple.html">Simple.cpp</a>.</p>
+<h3 id="2-gaussseidel-je-seriovy">2. Gauss–Seidel je sériový<a class="headerlink" href="#2-gaussseidel-je-seriovy" title="Permanent link">&para;</a></h3>
+<p>Gauss–Seidel čte <em>právě aktualizované</em> hodnoty sousedů — vnitřně sekvenční.
+Nahrazen <strong>Jacobi</strong> metodou, která čte hodnoty z minulého sweepu (z odděleného
+pole <code>tmp</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Jacobi: čte stará psi, píše do tmp → plně paralelní</span>
+<span class="cp">#pragma omp parallel for collapse(3) reduction(+:res)</span>
+<span class="k">for</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">tmp</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(...);</span><span class="w"> </span><span class="p">}</span>
+<span class="n">std</span><span class="o">::</span><span class="n">swap</span><span class="p">(</span><span class="n">psi</span><span class="p">.</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">tmp</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Cena: Jacobi potřebuje o pár sweepů víc než Gauss–Seidel, ale paralelně je
+celkově mnohem rychlejší.</p>
+<h2 id="redukce-pro-skalarni-soucty">Redukce pro skalární součty<a class="headerlink" href="#redukce-pro-skalarni-soucty" title="Permanent link">&para;</a></h2>
+<p>Sčítání přes buňky (reziduum, skalární součiny v CG) potřebuje <strong>reduction</strong>, aby
+se sčítání z různých vláken bezpečně sloučilo:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">double</span><span class="w"> </span><span class="n">cont</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="cp">#pragma omp parallel for reduction(+:cont)</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">cont</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="n">resField</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span>
+</code></pre></div>
+
+<p>OpenMP dá každému vláknu privátní kopii <code>cont</code>, na konci je sečte.</p>
+<h2 id="namerene-zrychleni">Naměřené zrychlení<a class="headerlink" href="#namerene-zrychleni" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Síť</th>
+<th>1 vlákno</th>
+<th>6 vláken</th>
+<th>Zrychlení</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>80×20×20 (32k)</td>
+<td>12,9 s</td>
+<td>3,1 s</td>
+<td><strong>4,2×</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="proc-ne-idealnich-6">Proč ne ideálních 6×<a class="headerlink" href="#proc-ne-idealnich-6" title="Permanent link">&para;</a></h2>
+<p>Úzké hrdlo je <strong>paměťová propustnost</strong>, ne výpočet. CFD stencil je
+<em>memory-bound</em>: na každou aritmetickou operaci připadá několik čtení z paměti.
+Vlákna si konkurují o sdílenou cache a paměťovou sběrnici.</p>
+<p>Proto se běh pouští na <strong>6 fyzických jader</strong> (<code>OMP_NUM_THREADS=6</code>), ne na 12
+logických (hyperthreading) — druhé vlákno na jádře by jen soupeřilo o tutéž
+cache bez přínosu.</p>
+<div class="admonition note">
+<p class="admonition-title">Shrnutí dvou klíčových rozhodnutí</p>
+<p>1. <strong>Buňkový přístup</strong> u sestavení matice — eliminuje race bez
+nutnosti atomických operací (pomalé) nebo barvení mřížky (složité).</p>
+<p>2. <strong>Jacobi místo Gauss–Seidel</strong> — obětuje konvergenční rychlost
+za plnou paralelizovatelnost.</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="theory__08-cg.html">
+        ← 8. Conjugate Gradient solver</a>
+    
+    
+      <a class="next" href="cpp__00-overview.html">
+        Architektura projektu →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

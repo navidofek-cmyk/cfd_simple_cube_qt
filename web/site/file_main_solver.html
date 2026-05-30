@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>main.cpp (řešič) — průvodce kódem</title>
+<style>
+:root{
+  --bg:#0d1117; --fg:#e6edf3; --accent:#58a6ff; --accent2:#f0a050;
+  --muted:#8b949e; --card:#161b22; --border:#30363d; --note:#1c2530;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  line-height:1.6;display:flex;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── postranní navigace ── */
+.sidebar{width:280px;flex-shrink:0;background:var(--card);
+  border-right:1px solid var(--border);padding:1.2rem;overflow-y:auto;
+  height:100vh;position:sticky;top:0}
+.sidebar h1{font-size:1.1rem;margin-bottom:.2rem}
+.sidebar .tag{color:var(--muted);font-size:.78rem;margin-bottom:1rem;display:block}
+.sidebar .group{color:var(--accent2);font-size:.72rem;text-transform:uppercase;
+  letter-spacing:.05em;margin:1rem 0 .3rem;font-weight:600}
+.sidebar ul{list-style:none}
+.sidebar li a{display:block;padding:.25rem .5rem;border-radius:5px;
+  font-size:.88rem;color:var(--fg)}
+.sidebar li a:hover{background:var(--note);text-decoration:none}
+.sidebar li a.active{background:var(--accent);color:#0d1117;font-weight:600}
+
+/* ── obsah ── */
+.content{flex:1;padding:2rem 2.5rem;max-width:1000px;overflow-x:hidden}
+h2{font-size:1.9rem;margin-bottom:.3rem}
+h3{font-size:1.25rem;color:var(--accent);margin:2rem 0 .6rem;
+  border-bottom:1px solid var(--border);padding-bottom:.3rem}
+.lead{color:var(--muted);font-size:1.05rem;margin-bottom:1.5rem}
+.meta-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.chip{background:var(--card);border:1px solid var(--border);
+  padding:.25rem .7rem;border-radius:1rem;font-size:.8rem;color:var(--muted)}
+.chip b{color:var(--fg)}
+
+.note{background:var(--note);border-left:3px solid var(--accent);
+  padding:.8rem 1rem;border-radius:0 6px 6px 0;margin:.6rem 0 1rem;
+  font-size:.95rem}
+.note.star{border-left-color:var(--accent2)}
+
+pre{background:#0b0e13;border:1px solid var(--border);border-radius:8px;
+  padding:1rem;overflow-x:auto;margin:.5rem 0 0;font-size:.84rem;line-height:1.45}
+code,pre{font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace}
+.hl pre{margin:0;border:none;padding:0;background:none}
+.lineno{color:var(--muted);font-size:.78rem;margin:.4rem 0 .2rem}
+
+.card{background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:1.4rem;margin:1rem 0}
+.card h4{font-size:1.05rem;margin-bottom:.3rem}
+.card p{color:var(--muted);font-size:.9rem}
+
+details{margin:1.5rem 0}
+details summary{cursor:pointer;color:var(--accent);font-size:.9rem;padding:.4rem 0}
+
+.nav-bottom{display:flex;justify-content:space-between;margin-top:2.5rem;
+  padding-top:1.5rem;border-top:1px solid var(--border);gap:1rem}
+.nav-bottom a{flex:1;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:.8rem 1rem;font-size:.9rem}
+.nav-bottom a.next{text-align:right}
+.missing{color:var(--accent2);font-size:.85rem;font-style:italic}
+.diagram pre{background:#0b0e13;color:#9fd0ff;border:1px solid var(--border);
+  border-radius:8px;padding:1.2rem;overflow-x:auto;font-size:.74rem;line-height:1.3}
+ol.flow{margin:.3rem 0 .3rem 1.2rem;padding:0}
+ol.flow li{margin:.4rem 0;color:var(--fg);font-size:.92rem}
+ol.flow code,.card code,.note code{background:#0b0e13;border:1px solid var(--border);
+  border-radius:4px;padding:.05rem .35rem;font-size:.85em;color:var(--accent2)}
+.footer{color:var(--muted);font-size:.8rem;margin-top:2rem;text-align:center}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.hl .hll { background-color: #49483e }
+.hl { background: #272822; color: #F8F8F2 }
+.hl .c { color: #959077 } /* Comment */
+.hl .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.hl .esc { color: #F8F8F2 } /* Escape */
+.hl .g { color: #F8F8F2 } /* Generic */
+.hl .k { color: #66D9EF } /* Keyword */
+.hl .l { color: #AE81FF } /* Literal */
+.hl .n { color: #F8F8F2 } /* Name */
+.hl .o { color: #FF4689 } /* Operator */
+.hl .x { color: #F8F8F2 } /* Other */
+.hl .p { color: #F8F8F2 } /* Punctuation */
+.hl .ch { color: #959077 } /* Comment.Hashbang */
+.hl .cm { color: #959077 } /* Comment.Multiline */
+.hl .cp { color: #959077 } /* Comment.Preproc */
+.hl .cpf { color: #959077 } /* Comment.PreprocFile */
+.hl .c1 { color: #959077 } /* Comment.Single */
+.hl .cs { color: #959077 } /* Comment.Special */
+.hl .gd { color: #FF4689 } /* Generic.Deleted */
+.hl .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.hl .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.hl .gr { color: #F8F8F2 } /* Generic.Error */
+.hl .gh { color: #F8F8F2 } /* Generic.Heading */
+.hl .gi { color: #A6E22E } /* Generic.Inserted */
+.hl .go { color: #66D9EF } /* Generic.Output */
+.hl .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.hl .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.hl .gu { color: #959077 } /* Generic.Subheading */
+.hl .gt { color: #F8F8F2 } /* Generic.Traceback */
+.hl .kc { color: #66D9EF } /* Keyword.Constant */
+.hl .kd { color: #66D9EF } /* Keyword.Declaration */
+.hl .kn { color: #FF4689 } /* Keyword.Namespace */
+.hl .kp { color: #66D9EF } /* Keyword.Pseudo */
+.hl .kr { color: #66D9EF } /* Keyword.Reserved */
+.hl .kt { color: #66D9EF } /* Keyword.Type */
+.hl .ld { color: #E6DB74 } /* Literal.Date */
+.hl .m { color: #AE81FF } /* Literal.Number */
+.hl .s { color: #E6DB74 } /* Literal.String */
+.hl .na { color: #A6E22E } /* Name.Attribute */
+.hl .nb { color: #F8F8F2 } /* Name.Builtin */
+.hl .nc { color: #A6E22E } /* Name.Class */
+.hl .no { color: #66D9EF } /* Name.Constant */
+.hl .nd { color: #A6E22E } /* Name.Decorator */
+.hl .ni { color: #F8F8F2 } /* Name.Entity */
+.hl .ne { color: #A6E22E } /* Name.Exception */
+.hl .nf { color: #A6E22E } /* Name.Function */
+.hl .nl { color: #F8F8F2 } /* Name.Label */
+.hl .nn { color: #F8F8F2 } /* Name.Namespace */
+.hl .nx { color: #A6E22E } /* Name.Other */
+.hl .py { color: #F8F8F2 } /* Name.Property */
+.hl .nt { color: #FF4689 } /* Name.Tag */
+.hl .nv { color: #F8F8F2 } /* Name.Variable */
+.hl .ow { color: #FF4689 } /* Operator.Word */
+.hl .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.hl .w { color: #F8F8F2 } /* Text.Whitespace */
+.hl .mb { color: #AE81FF } /* Literal.Number.Bin */
+.hl .mf { color: #AE81FF } /* Literal.Number.Float */
+.hl .mh { color: #AE81FF } /* Literal.Number.Hex */
+.hl .mi { color: #AE81FF } /* Literal.Number.Integer */
+.hl .mo { color: #AE81FF } /* Literal.Number.Oct */
+.hl .sa { color: #E6DB74 } /* Literal.String.Affix */
+.hl .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.hl .sc { color: #E6DB74 } /* Literal.String.Char */
+.hl .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.hl .sd { color: #E6DB74 } /* Literal.String.Doc */
+.hl .s2 { color: #E6DB74 } /* Literal.String.Double */
+.hl .se { color: #AE81FF } /* Literal.String.Escape */
+.hl .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.hl .si { color: #E6DB74 } /* Literal.String.Interpol */
+.hl .sx { color: #E6DB74 } /* Literal.String.Other */
+.hl .sr { color: #E6DB74 } /* Literal.String.Regex */
+.hl .s1 { color: #E6DB74 } /* Literal.String.Single */
+.hl .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.hl .bp { color: #F8F8F2 } /* Name.Builtin.Pseudo */
+.hl .fm { color: #A6E22E } /* Name.Function.Magic */
+.hl .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.hl .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.hl .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.hl .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.hl .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+.hl{background:none}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <h1><a href="index.html">CFD Cube</a></h1>
+  <span class="tag">průvodce kódem · řešič + Qt GUI</span>
+
+  <div class="group">Přehled</div>
+  <ul>
+    <li><a href="index.html" class="">Úvod</a></li>
+    <li><a href="architecture.html" class="">Architektura &amp; diagram</a></li>
+  </ul>
+
+  
+    <div class="group">Řešič — základní typy</div>
+    <ul>
+    
+      <li><a href="file_vec3.html" class="">Vec3.hpp</a></li>
+    
+      <li><a href="file_field.html" class="">Field.hpp</a></li>
+    
+      <li><a href="file_mesh.html" class="">Mesh.hpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — lineární algebra</div>
+    <ul>
+    
+      <li><a href="file_fvmatrix.html" class="">fvMatrix.hpp</a></li>
+    
+      <li><a href="file_cgsolver.html" class="">CgSolver.hpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — SIMPLE</div>
+    <ul>
+    
+      <li><a href="file_simple_h.html" class="">Simple.hpp</a></li>
+    
+      <li><a href="file_simple_cpp.html" class="">Simple.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — I/O a vstup</div>
+    <ul>
+    
+      <li><a href="file_io_h.html" class="">io.hpp</a></li>
+    
+      <li><a href="file_io_cpp.html" class="">io.cpp</a></li>
+    
+      <li><a href="file_main_solver.html" class="active">main.cpp (řešič)</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — data a vlákno</div>
+    <ul>
+    
+      <li><a href="file_gui_main.html" class="">main.cpp (GUI)</a></li>
+    
+      <li><a href="file_fielddata_h.html" class="">FieldData.hpp</a></li>
+    
+      <li><a href="file_fielddata_cpp.html" class="">FieldData.cpp</a></li>
+    
+      <li><a href="file_worker_h.html" class="">SolverWorker.hpp</a></li>
+    
+      <li><a href="file_worker_cpp.html" class="">SolverWorker.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — vykreslování</div>
+    <ul>
+    
+      <li><a href="file_fieldview_h.html" class="">FieldView.hpp</a></li>
+    
+      <li><a href="file_fieldview_cpp.html" class="">FieldView.cpp</a></li>
+    
+      <li><a href="file_domain3d_h.html" class="">DomainView3D.hpp</a></li>
+    
+      <li><a href="file_domain3d_cpp.html" class="">DomainView3D.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — okno a sestavení</div>
+    <ul>
+    
+      <li><a href="file_mainwindow_h.html" class="">MainWindow.hpp</a></li>
+    
+      <li><a href="file_mainwindow_cpp.html" class="">MainWindow.cpp</a></li>
+    
+      <li><a href="file_cmake.html" class="">CMakeLists.txt</a></li>
+    
+    </ul>
+  
+
+  <div class="group">Teorie &amp; odkazy</div>
+  <ul>
+    <li><a href="theory/index.html">Teoretický web řešiče →</a></li>
+    <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube_qt" target="_blank" rel="noopener">
+      GitHub: Qt GUI ↗</a></li>
+    <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube" target="_blank" rel="noopener">
+      GitHub: řešič ↗</a></li>
+  </ul>
+</nav>
+<main class="content">
+  
+
+<h2>main.cpp (řešič)</h2>
+<p class="lead">CLI vstupní bod samostatného řešiče.</p>
+
+<div class="meta-row">
+  <span class="chip">skupina: <b>Řešič — I/O a vstup</b></span>
+  <span class="chip">jazyk: <b>cpp</b></span>
+  <span class="chip"><b>50</b> řádků</span>
+</div>
+
+<div class="note"><b>Role v projektu:</b> Spustí jeden běh s pevně danými parametry a uloží výstupy.</div>
+
+
+
+  
+  <h3>Hlavička / includy</h3>
+  <div class="hl"><div class="hl"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Simple.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;io.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+</pre></div>
+</div>
+  
+
+  
+  <h3>Definice úlohy
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 5)</span></h3>
+  <div class="note ">Pevně nastaví síť 320×80×80, tunel 4×1×1 m, krychli 0.2³ uprostřed, Re=20. Vypíše hlavičku s parametry. Toto je referenční „produkční&#34; běh; GUI naopak parametry bere z formuláře.</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="c1">// Řádkové bufferování — progress je vidět živě i při přesměrování do souboru</span>
+<span class="w">    </span><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">,</span><span class="w"> </span><span class="n">_IOLBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Hranatý tunel: 4×1×1 m, čtvercový průřez</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">NX</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="n">NY</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span><span class="w"> </span><span class="n">NZ</span><span class="o">=</span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">LX</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span><span class="w"> </span><span class="n">LY</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">LZ</span><span class="o">=</span><span class="mf">1.0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Krychle 0.2×0.2×0.2 m uprostřed tunelu</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CX0</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="n">CX1</span><span class="o">=</span><span class="mf">1.1</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CY0</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="n">CY1</span><span class="o">=</span><span class="mf">0.6</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CZ0</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="n">CZ1</span><span class="o">=</span><span class="mf">0.6</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">D</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CX1</span><span class="o">-</span><span class="n">CX0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Re = U_in * D / nu = 20  →  laminární ustálené proudění</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">RE</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="n">U_IN</span><span class="o">=</span><span class="mf">1.0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== 3D Channel flow around cube ===</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Mesh : %d×%d×%d  (%.0fk buněk)  dx=dy=dz=%.4f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="n">NX</span><span class="p">,</span><span class="n">NY</span><span class="p">,</span><span class="n">NZ</span><span class="p">,(</span><span class="kt">double</span><span class="p">)</span><span class="n">NX</span><span class="o">*</span><span class="n">NY</span><span class="o">*</span><span class="n">NZ</span><span class="o">/</span><span class="mi">1000</span><span class="p">,</span><span class="n">LX</span><span class="o">/</span><span class="n">NX</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Cube : x=[%.1f,%.1f] y=[%.1f,%.1f] z=[%.1f,%.1f]  D=%.2f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="n">CX0</span><span class="p">,</span><span class="n">CX1</span><span class="p">,</span><span class="n">CY0</span><span class="p">,</span><span class="n">CY1</span><span class="p">,</span><span class="n">CZ0</span><span class="p">,</span><span class="n">CZ1</span><span class="p">,</span><span class="n">D</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Re=%.0f  U_in=%.1f  nu=%.4f</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">RE</span><span class="p">,</span><span class="n">U_IN</span><span class="p">,</span><span class="n">U_IN</span><span class="o">*</span><span class="n">D</span><span class="o">/</span><span class="n">RE</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Diagnostický běh: tol=1e-9 (neukončí předčasně), maxIter=410,</span>
+<span class="w">    </span><span class="c1">// snapshoty polí v iter 250/300/400 pro porovnání.</span>
+<span class="w">    </span><span class="n">ChannelSolver</span><span class="w"> </span><span class="n">sim</span><span class="p">(</span><span class="n">NX</span><span class="p">,</span><span class="n">NY</span><span class="p">,</span><span class="n">NZ</span><span class="p">,</span><span class="w"> </span><span class="n">LX</span><span class="p">,</span><span class="n">LY</span><span class="p">,</span><span class="n">LZ</span><span class="p">,</span>
+<span class="w">                      </span><span class="n">CX0</span><span class="p">,</span><span class="n">CX1</span><span class="p">,</span><span class="w"> </span><span class="n">CY0</span><span class="p">,</span><span class="n">CY1</span><span class="p">,</span><span class="w"> </span><span class="n">CZ0</span><span class="p">,</span><span class="n">CZ1</span><span class="p">,</span>
+<span class="w">                      </span><span class="n">RE</span><span class="p">,</span><span class="w"> </span><span class="n">U_IN</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mi">410</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-9</span><span class="p">);</span>
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">snapIters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">250</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="mi">400</span><span class="p">};</span>
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">convergencePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;convergence.dat&quot;</span><span class="p">;</span><span class="w">   </span><span class="c1">// živý zápis reziduí</span>
+<span class="w">    </span><span class="c1">// Export matic jen pro malé sítě (velké by byly stovky MB)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">NX</span><span class="o">*</span><span class="n">NY</span><span class="o">*</span><span class="n">NZ</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">100000</span><span class="p">){</span>
+<span class="w">        </span><span class="n">sim</span><span class="p">.</span><span class="n">matrixExportPath</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;pmatrix.dat&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="n">sim</span><span class="p">.</span><span class="n">matrixExportPathU</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;umatrix.dat&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+</pre></div>
+</div>
+  
+  
+  <h3>Spuštění a uložení
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 42)</span></h3>
+  <div class="note ">Nastaví snapshoty/konvergenci, zavolá solve() a uloží VTK+fields+mesh. Export matic jen pro malé sítě. Řádkové bufferování stdout → progress je vidět i při přesměrování do souboru.</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeVTK</span><span class="w">   </span><span class="p">(</span><span class="s">&quot;channel_cube.vtk&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">resField</span><span class="p">);</span>
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeFields</span><span class="p">(</span><span class="s">&quot;fields.dat&quot;</span><span class="p">,</span><span class="w">       </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">resField</span><span class="p">);</span>
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeMesh</span><span class="w">  </span><span class="p">(</span><span class="s">&quot;mesh.dat&quot;</span><span class="p">,</span><span class="w">         </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Výstup: channel_cube.vtk  fields.dat  mesh.dat</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  
+  
+
+  <details>
+    <summary>📄 Zobrazit celý soubor</summary>
+    <div class="hl"><div class="hl"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Simple.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;io.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="c1">// Řádkové bufferování — progress je vidět živě i při přesměrování do souboru</span>
+<span class="w">    </span><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">,</span><span class="w"> </span><span class="n">_IOLBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Hranatý tunel: 4×1×1 m, čtvercový průřez</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">NX</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="n">NY</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span><span class="w"> </span><span class="n">NZ</span><span class="o">=</span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">LX</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span><span class="w"> </span><span class="n">LY</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">LZ</span><span class="o">=</span><span class="mf">1.0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Krychle 0.2×0.2×0.2 m uprostřed tunelu</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CX0</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="n">CX1</span><span class="o">=</span><span class="mf">1.1</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CY0</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="n">CY1</span><span class="o">=</span><span class="mf">0.6</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CZ0</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="n">CZ1</span><span class="o">=</span><span class="mf">0.6</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">D</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CX1</span><span class="o">-</span><span class="n">CX0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Re = U_in * D / nu = 20  →  laminární ustálené proudění</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">RE</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="n">U_IN</span><span class="o">=</span><span class="mf">1.0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;=== 3D Channel flow around cube ===</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Mesh : %d×%d×%d  (%.0fk buněk)  dx=dy=dz=%.4f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="n">NX</span><span class="p">,</span><span class="n">NY</span><span class="p">,</span><span class="n">NZ</span><span class="p">,(</span><span class="kt">double</span><span class="p">)</span><span class="n">NX</span><span class="o">*</span><span class="n">NY</span><span class="o">*</span><span class="n">NZ</span><span class="o">/</span><span class="mi">1000</span><span class="p">,</span><span class="n">LX</span><span class="o">/</span><span class="n">NX</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Cube : x=[%.1f,%.1f] y=[%.1f,%.1f] z=[%.1f,%.1f]  D=%.2f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="n">CX0</span><span class="p">,</span><span class="n">CX1</span><span class="p">,</span><span class="n">CY0</span><span class="p">,</span><span class="n">CY1</span><span class="p">,</span><span class="n">CZ0</span><span class="p">,</span><span class="n">CZ1</span><span class="p">,</span><span class="n">D</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Re=%.0f  U_in=%.1f  nu=%.4f</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">RE</span><span class="p">,</span><span class="n">U_IN</span><span class="p">,</span><span class="n">U_IN</span><span class="o">*</span><span class="n">D</span><span class="o">/</span><span class="n">RE</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Diagnostický běh: tol=1e-9 (neukončí předčasně), maxIter=410,</span>
+<span class="w">    </span><span class="c1">// snapshoty polí v iter 250/300/400 pro porovnání.</span>
+<span class="w">    </span><span class="n">ChannelSolver</span><span class="w"> </span><span class="n">sim</span><span class="p">(</span><span class="n">NX</span><span class="p">,</span><span class="n">NY</span><span class="p">,</span><span class="n">NZ</span><span class="p">,</span><span class="w"> </span><span class="n">LX</span><span class="p">,</span><span class="n">LY</span><span class="p">,</span><span class="n">LZ</span><span class="p">,</span>
+<span class="w">                      </span><span class="n">CX0</span><span class="p">,</span><span class="n">CX1</span><span class="p">,</span><span class="w"> </span><span class="n">CY0</span><span class="p">,</span><span class="n">CY1</span><span class="p">,</span><span class="w"> </span><span class="n">CZ0</span><span class="p">,</span><span class="n">CZ1</span><span class="p">,</span>
+<span class="w">                      </span><span class="n">RE</span><span class="p">,</span><span class="w"> </span><span class="n">U_IN</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mi">410</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-9</span><span class="p">);</span>
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">snapIters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">250</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="mi">400</span><span class="p">};</span>
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">convergencePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;convergence.dat&quot;</span><span class="p">;</span><span class="w">   </span><span class="c1">// živý zápis reziduí</span>
+<span class="w">    </span><span class="c1">// Export matic jen pro malé sítě (velké by byly stovky MB)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">NX</span><span class="o">*</span><span class="n">NY</span><span class="o">*</span><span class="n">NZ</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">100000</span><span class="p">){</span>
+<span class="w">        </span><span class="n">sim</span><span class="p">.</span><span class="n">matrixExportPath</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;pmatrix.dat&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="n">sim</span><span class="p">.</span><span class="n">matrixExportPathU</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;umatrix.dat&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeVTK</span><span class="w">   </span><span class="p">(</span><span class="s">&quot;channel_cube.vtk&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">resField</span><span class="p">);</span>
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeFields</span><span class="p">(</span><span class="s">&quot;fields.dat&quot;</span><span class="p">,</span><span class="w">       </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">resField</span><span class="p">);</span>
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeMesh</span><span class="w">  </span><span class="p">(</span><span class="s">&quot;mesh.dat&quot;</span><span class="p">,</span><span class="w">         </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Výstup: channel_cube.vtk  fields.dat  mesh.dat</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  </details>
+
+
+
+<div class="nav-bottom">
+  <a href="file_io_cpp.html">← io.cpp</a>
+  <a class="next" href="file_gui_main.html">main.cpp (GUI) →</a>
+</div>
+
+
+  <div class="footer">FastAPI + uv · kód se čte živě z disku</div>
+</main>
+</body>
+</html>

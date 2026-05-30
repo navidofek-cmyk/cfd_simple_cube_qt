@@ -2,13 +2,14 @@
 FastAPI web — interaktivní průvodce kódem projektu CFD Cube (řešič + Qt GUI).
 
 Web čte reálné zdrojové soubory z disku a ke každému přidá český výklad po
-sekcích (viz annotations.py). Kód se zvýrazní Pygmentsem. Žádná databáze,
-žádný build — `uv run` a běží.
+sekcích (viz annotations.py). Kód se zvýrazní Pygmentsem. Žádná databáze.
 
-Spuštění:
-    uv run uvicorn server:app --reload
-    # nebo:
-    uv run python server.py
+Dva režimy ze STEJNÝCH šablon:
+  • dynamicky:  uv run uvicorn server:app --reload     (FastAPI, port 8085)
+  • staticky:   uv run python build_static.py          (vygeneruje site/ pro GitHub Pages)
+
+Odkazy mezi stránkami procházejí přes helper `url(...)`, který v dynamickém
+režimu generuje cesty typu /file/<slug> a ve statickém file_<slug>.html.
 """
 
 from pathlib import Path
@@ -22,14 +23,34 @@ from pygments.formatters import HtmlFormatter
 
 from annotations import FILES, GROUPS
 
+TEMPLATES_DIR = Path(__file__).parent / "templates"
+
 app = FastAPI(title="CFD Cube — průvodce kódem")
-templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Pygments: jeden formatter (řádkování zap.), styl „monokai".
 _FORMATTER = HtmlFormatter(style="monokai", nowrap=False, cssclass="hl")
 _PYGMENTS_CSS = _FORMATTER.get_style_defs(".hl")
 
 _LEXERS = {"cpp": CppLexer(), "cmake": CMakeLexer(), "text": TextLexer()}
+
+
+# ── helper na odkazy (společný pro dynamický i statický režim) ──────────────
+def make_url(static: bool):
+    """Vrátí funkci url(kind, slug=None) → cesta na danou stránku."""
+    def url(kind: str, slug: str | None = None) -> str:
+        if static:
+            if kind == "index":  return "index.html"
+            if kind == "arch":   return "architecture.html"
+            if kind == "file":   return f"file_{slug}.html"
+            if kind == "theory": return "theory/index.html"   # zkopírovaný web řešiče
+        else:
+            if kind == "index":  return "/"
+            if kind == "arch":   return "/architecture"
+            if kind == "file":   return f"/file/{slug}"
+            if kind == "theory": return "http://127.0.0.1:8084/"  # běžící docs server
+        return "#"
+    return url
 
 
 def _lexer(lang: str):
@@ -53,14 +74,12 @@ def build_sections(meta: dict) -> dict:
     """
     Rozseká soubor na sekce podle 'kotev'. Kotva = unikátní úryvek; sekce sahá
     od řádku s kotvou po řádek další kotvy. Robustní vůči přečíslování řádků.
-    Vrací dict s 'preamble' (před první kotvou) a 'sections' (heading/note/code/lineno).
     """
     lines = _read(Path(meta["path"]))
     if not lines:
         return {"missing": True, "preamble": "", "sections": [], "loc": 0}
 
     anchors = meta["sections"]
-    # Najdi řádek každé kotvy (postupně, aby se neopakovaně nešahalo dozadu).
     starts: list[int | None] = []
     search_from = 0
     for a in anchors:
@@ -79,11 +98,9 @@ def build_sections(meta: dict) -> dict:
     sections = []
     for n, (a, s) in enumerate(zip(anchors, starts)):
         if s is None:
-            # kotva nenalezena → zobraz aspoň poznámku bez kódu
             sections.append({"heading": a["heading"], "note": a["note"],
                              "code": "", "lineno": None, "missing": True})
             continue
-        # konec = další nalezená kotva, jinak konec souboru
         nxt = next((x for x in starts[n + 1:] if x is not None), len(lines))
         code = "\n".join(lines[s:nxt]).strip("\n")
         sections.append({"heading": a["heading"], "note": a["note"],
@@ -107,45 +124,57 @@ def grouped_files() -> dict[str, list]:
     return {g: items for g, items in out.items() if items}
 
 
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request):
+# ── kontexty stránek (sdílené serverem i statickým buildem) ─────────────────
+def ctx_index() -> dict:
     total_loc = sum(len(_read(Path(m["path"]))) for m in FILES.values())
-    # Pozn.: novější Starlette chce request jako 1. argument (ne název šablony).
-    return templates.TemplateResponse(request, "index.html", {
-        "groups": grouped_files(),
-        "n_files": len(FILES),
-        "total_loc": total_loc,
-        "pygments_css": _PYGMENTS_CSS,
-    })
+    return {"groups": grouped_files(), "n_files": len(FILES),
+            "total_loc": total_loc, "pygments_css": _PYGMENTS_CSS}
 
 
-@app.get("/architecture", response_class=HTMLResponse)
-def architecture(request: Request):
-    return templates.TemplateResponse(request, "architecture.html", {
-        "groups": grouped_files(),
-        "arch": True,
-        "pygments_css": _PYGMENTS_CSS,
-    })
+def ctx_architecture() -> dict:
+    return {"groups": grouped_files(), "arch": True, "pygments_css": _PYGMENTS_CSS}
 
 
-@app.get("/file/{slug}", response_class=HTMLResponse)
-def file_page(request: Request, slug: str):
+def ctx_file(slug: str) -> dict | None:
     meta = FILES.get(slug)
     if meta is None:
-        raise HTTPException(404, "Soubor není v průvodci.")
-    data = build_sections(meta)
-    # navigace předchozí/další v rámci celého pořadí
+        return None
     slugs = list(FILES.keys())
     i = slugs.index(slug)
     prev = slugs[i - 1] if i > 0 else None
     nxt = slugs[i + 1] if i < len(slugs) - 1 else None
-    return templates.TemplateResponse(request, "file.html", {
-        "slug": slug, "meta": meta, "data": data,
+    return {
+        "slug": slug, "meta": meta, "data": build_sections(meta),
         "groups": grouped_files(),
         "prev": (prev, FILES[prev]["title"]) if prev else None,
         "next": (nxt, FILES[nxt]["title"]) if nxt else None,
         "pygments_css": _PYGMENTS_CSS,
-    })
+    }
+
+
+# ── FastAPI routy (dynamický režim) ─────────────────────────────────────────
+_DYN_URL = make_url(static=False)
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    return templates.TemplateResponse(request, "index.html",
+                                      {**ctx_index(), "url": _DYN_URL})
+
+
+@app.get("/architecture", response_class=HTMLResponse)
+def architecture(request: Request):
+    return templates.TemplateResponse(request, "architecture.html",
+                                      {**ctx_architecture(), "url": _DYN_URL})
+
+
+@app.get("/file/{slug}", response_class=HTMLResponse)
+def file_page(request: Request, slug: str):
+    ctx = ctx_file(slug)
+    if ctx is None:
+        raise HTTPException(404, "Soubor není v průvodci.")
+    return templates.TemplateResponse(request, "file.html",
+                                      {**ctx, "url": _DYN_URL})
 
 
 if __name__ == "__main__":

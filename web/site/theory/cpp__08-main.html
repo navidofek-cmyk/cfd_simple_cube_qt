@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>main.cpp — vstupní bod — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="active">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#maincpp-vstupni-bod">main.cpp — vstupní bod</a><ul>
+<li><a href="#cely-soubor-zkracene">Celý soubor (zkráceně)</a></li>
+<li><a href="#proc-je-konfigurace-v-main-ne-v-solveru">Proč je konfigurace v main, ne v solveru</a></li>
+<li><a href="#jazykove-prvky">Jazykové prvky</a><ul>
+<li><a href="#const-lokalni-konstanty">const lokální konstanty</a></li>
+<li><a href="#konstruktor-s-vychozimi-argumenty">Konstruktor s výchozími argumenty</a></li>
+<li><a href="#konfigurace-pres-verejne-cleny">Konfigurace přes veřejné členy</a></li>
+<li><a href="#setvbuf-radkove-bufferovani">setvbuf — řádkové bufferování</a></li>
+</ul>
+</li>
+<li><a href="#poradi-solve-write">Pořadí: solve → write</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="maincpp-vstupni-bod">main.cpp — vstupní bod<a class="headerlink" href="#maincpp-vstupni-bod" title="Permanent link">&para;</a></h1>
+<p>Nastaví geometrii, parametry a spustí výpočet. Krátký, ale ukazuje, <strong>proč je
+konfigurace oddělená od řešiče</strong>.</p>
+<h2 id="cely-soubor-zkracene">Celý soubor (zkráceně)<a class="headerlink" href="#cely-soubor-zkracene" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Simple.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;io.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">,</span><span class="w"> </span><span class="n">_IOLBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w">   </span><span class="c1">// řádkové bufferování → živý progress</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">NX</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="n">NY</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span><span class="w"> </span><span class="n">NZ</span><span class="o">=</span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">LX</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span><span class="w"> </span><span class="n">LY</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">LZ</span><span class="o">=</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CX0</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="n">CX1</span><span class="o">=</span><span class="mf">1.1</span><span class="p">;</span><span class="w">          </span><span class="c1">// krychle x</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CY0</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="n">CY1</span><span class="o">=</span><span class="mf">0.6</span><span class="p">;</span><span class="w">          </span><span class="c1">// krychle y</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">CZ0</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="n">CZ1</span><span class="o">=</span><span class="mf">0.6</span><span class="p">;</span><span class="w">          </span><span class="c1">// krychle z</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">RE</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="n">U_IN</span><span class="o">=</span><span class="mf">1.0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">ChannelSolver</span><span class="w"> </span><span class="n">sim</span><span class="p">(</span><span class="n">NX</span><span class="p">,</span><span class="n">NY</span><span class="p">,</span><span class="n">NZ</span><span class="p">,</span><span class="w"> </span><span class="n">LX</span><span class="p">,</span><span class="n">LY</span><span class="p">,</span><span class="n">LZ</span><span class="p">,</span>
+<span class="w">                      </span><span class="n">CX0</span><span class="p">,</span><span class="n">CX1</span><span class="p">,</span><span class="w"> </span><span class="n">CY0</span><span class="p">,</span><span class="n">CY1</span><span class="p">,</span><span class="w"> </span><span class="n">CZ0</span><span class="p">,</span><span class="n">CZ1</span><span class="p">,</span>
+<span class="w">                      </span><span class="n">RE</span><span class="p">,</span><span class="w"> </span><span class="n">U_IN</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mi">410</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-9</span><span class="p">);</span>
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">snapIters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">250</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="mi">400</span><span class="p">};</span>
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">convergencePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;convergence.dat&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">sim</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeVTK</span><span class="w">   </span><span class="p">(</span><span class="s">&quot;channel_cube.vtk&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">resField</span><span class="p">);</span>
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeFields</span><span class="p">(</span><span class="s">&quot;fields.dat&quot;</span><span class="p">,</span><span class="w">       </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sim</span><span class="p">.</span><span class="n">resField</span><span class="p">);</span>
+<span class="w">    </span><span class="n">io</span><span class="o">::</span><span class="n">writeMesh</span><span class="w">  </span><span class="p">(</span><span class="s">&quot;mesh.dat&quot;</span><span class="p">,</span><span class="w">         </span><span class="n">sim</span><span class="p">.</span><span class="n">m</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="proc-je-konfigurace-v-main-ne-v-solveru">Proč je konfigurace v main, ne v solveru<a class="headerlink" href="#proc-je-konfigurace-v-main-ne-v-solveru" title="Permanent link">&para;</a></h2>
+<p>Solver (<code>ChannelSolver</code>) nezná konkrétní čísla — bere je jako parametry
+konstruktoru. <code>main</code> je jediné místo, kde se rozhoduje <em>co</em> se počítá (velikost
+sítě, Re, geometrie krychle). Výhoda: změna scénáře = změna <code>main</code>, ne zásah do
+fyziky. Solver je <strong>znovupoužitelný</strong>.</p>
+<h2 id="jazykove-prvky">Jazykové prvky<a class="headerlink" href="#jazykove-prvky" title="Permanent link">&para;</a></h2>
+<h3 id="const-lokalni-konstanty"><code>const</code> lokální konstanty<a class="headerlink" href="#const-lokalni-konstanty" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">NX</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="p">...;</span>
+<span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">RE</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="p">...;</span>
+</code></pre></div>
+
+<p>Vše, co se za běhu nemění, je <code>const</code> — překladač to může zoptimalizovat a brání
+to nechtěné změně. Dokumentuje záměr („tohle je vstupní parametr").</p>
+<h3 id="konstruktor-s-vychozimi-argumenty">Konstruktor s výchozími argumenty<a class="headerlink" href="#konstruktor-s-vychozimi-argumenty" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">ChannelSolver</span><span class="w"> </span><span class="nf">sim</span><span class="p">(</span><span class="n">NX</span><span class="p">,</span><span class="n">NY</span><span class="p">,</span><span class="n">NZ</span><span class="p">,</span><span class="w"> </span><span class="n">LX</span><span class="p">,</span><span class="n">LY</span><span class="p">,</span><span class="n">LZ</span><span class="p">,</span><span class="w"> </span><span class="n">CX0</span><span class="p">,</span><span class="n">CX1</span><span class="p">,</span><span class="n">CY0</span><span class="p">,</span><span class="n">CY1</span><span class="p">,</span><span class="n">CZ0</span><span class="p">,</span><span class="n">CZ1</span><span class="p">,</span>
+<span class="w">                  </span><span class="n">RE</span><span class="p">,</span><span class="w"> </span><span class="n">U_IN</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mi">410</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-9</span><span class="p">);</span>
+<span class="c1">//                          αU   αP  maxIter tol</span>
+</code></pre></div>
+
+<p>Poslední čtyři argumenty (<code>αU=0.7, αP=0.3, maxIter, tol</code>) mají v deklaraci
+<strong>výchozí hodnoty</strong>, takže pro běžný běh se nemusí psát. Tady jsou uvedené,
+protože diagnostický běh chtěl jinou toleranci a počet iterací.</p>
+<h3 id="konfigurace-pres-verejne-cleny">Konfigurace přes veřejné členy<a class="headerlink" href="#konfigurace-pres-verejne-cleny" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">sim</span><span class="p">.</span><span class="n">snapIters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">250</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="mi">400</span><span class="p">};</span><span class="w">        </span><span class="c1">// seznam iterací pro snapshot</span>
+<span class="n">sim</span><span class="p">.</span><span class="n">convergencePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;convergence.dat&quot;</span><span class="p">;</span><span class="w"> </span><span class="c1">// kam zapisovat rezidua</span>
+</code></pre></div>
+
+<p>Volitelné chování se nastaví přiřazením do veřejných členů <em>po</em> konstrukci.
+Alternativa k přetížení konstruktoru o další parametry — čistší, když je
+volitelných nastavení víc. <code>{250,300,400}</code> je <strong>initializer list</strong> přiřazený do
+<code>std::vector&lt;int&gt;</code>.</p>
+<h3 id="setvbuf-radkove-bufferovani"><code>setvbuf</code> — řádkové bufferování<a class="headerlink" href="#setvbuf-radkove-bufferovani" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">setvbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">,</span><span class="w"> </span><span class="n">_IOLBF</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Přepne <code>stdout</code> na <strong>řádkové bufferování</strong> — každý <code>\n</code> se hned vypíše. Bez toho
+se výstup při přesměrování do souboru drží v bloku a progress není vidět živě.
+Praktická drobnost s velkým dopadem na sledování dlouhého výpočtu.</p>
+<h2 id="poradi-solve-write">Pořadí: solve → write<a class="headerlink" href="#poradi-solve-write" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="n">sim</span><span class="p">.</span><span class="n">solve</span><span class="p">();</span><span class="w">                  </span><span class="c1">// 1. spočítá (může trvat minuty)</span>
+<span class="n">io</span><span class="o">::</span><span class="n">writeVTK</span><span class="p">(...);</span><span class="w">            </span><span class="c1">// 2. teprve pak zapíše výsledky</span>
+</code></pre></div>
+
+<p>Výsledky se zapisují až po návratu ze <code>solve()</code>. To znamená: když výpočet
+nedoběhne do konvergence (dosáhne <code>maxIter</code>), zapíše se i tak poslední stav —
+<code>solve()</code> se vrátí v obou případech.</p>
+<div class="admonition tip">
+<p class="admonition-title">Velikost sítě = jediné číslo</p>
+<p>Změna <code>NX, NY, NZ</code> přepíná mezi hrubou (rychlou) a jemnou
+(přesnou) sítí. <code>80×20×20</code> doběhne za sekundy, <code>320×80×80</code>
+= 2 mil. buněk za desítky minut. Nic jiného se měnit nemusí.</p>
+</div>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="cpp__07-io.html">
+        ← io.cpp — vstup/výstup</a>
+    
+    
+      <a class="next" href="cpp__09-language.html">
+        Použité prvky C++ (reference) →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

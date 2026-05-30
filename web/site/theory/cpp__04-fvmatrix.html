@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fvMatrix.hpp — matice a stencil — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="active">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#fvmatrixhpp-matice-a-stencil">fvMatrix.hpp — matice a stencil</a><ul>
+<li><a href="#struktura">Struktura</a></li>
+<li><a href="#jazykove-prvky">Jazykové prvky</a><ul>
+<li><a href="#reference-jako-cleny">Reference jako členy</a></li>
+<li><a href="#koeficienty-vzdy-double-zdroj-typu-t">Koeficienty vždy double, zdroj typu T</a></li>
+</ul>
+</li>
+<li><a href="#jacobi-resic">Jacobi řešič</a><ul>
+<li><a href="#jacobi-vs-gaussseidel">Jacobi vs. Gauss–Seidel</a></li>
+<li><a href="#stdswap-misto-kopie">std::swap místo kopie</a></li>
+<li><a href="#extra-a-scale-tlakovy-gradient-bez-kopie-matice">extra a scale — tlakový gradient bez kopie matice</a></li>
+</ul>
+</li>
+<li><a href="#pomocne-metody-pro-simple">Pomocné metody pro SIMPLE</a><ul>
+<li><a href="#pevne-bunky-v-relax-a-a">Pevné buňky v relax a A</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="fvmatrixhpp-matice-a-stencil">fvMatrix.hpp — matice a stencil<a class="headerlink" href="#fvmatrixhpp-matice-a-stencil" title="Permanent link">&para;</a></h1>
+<p><code>fvMatrix&lt;T&gt;</code> je srdce diskretizace: drží 7bodový stencil jako sedm polí
+koeficientů a umí Jacobi řešení. Šablona funguje pro tlak (<code>double</code>) i rychlost
+(<code>Vec3</code>).</p>
+<h2 id="struktura">Struktura<a class="headerlink" href="#struktura" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">fvMatrix</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Mesh</span><span class="o">&amp;</span><span class="w"> </span><span class="n">m</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">psi</span><span class="p">;</span><span class="w">                                 </span><span class="c1">// řešené pole (reference!)</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">aP</span><span class="p">,</span><span class="w"> </span><span class="n">aE</span><span class="p">,</span><span class="w"> </span><span class="n">aW</span><span class="p">,</span><span class="w"> </span><span class="n">aN</span><span class="p">,</span><span class="w"> </span><span class="n">aS</span><span class="p">,</span><span class="w"> </span><span class="n">aF</span><span class="p">,</span><span class="w"> </span><span class="n">aB</span><span class="p">;</span><span class="w"> </span><span class="c1">// 7 diagonál</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w">      </span><span class="n">src</span><span class="p">;</span><span class="w">                        </span><span class="c1">// pravá strana</span>
+
+<span class="w">    </span><span class="n">fvMatrix</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Mesh</span><span class="o">&amp;</span><span class="w"> </span><span class="n">m_</span><span class="p">,</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">psi_</span><span class="p">)</span>
+<span class="w">        </span><span class="o">:</span><span class="w"> </span><span class="n">m</span><span class="p">(</span><span class="n">m_</span><span class="p">),</span><span class="w"> </span><span class="n">psi</span><span class="p">(</span><span class="n">psi_</span><span class="p">),</span>
+<span class="w">          </span><span class="n">aP</span><span class="p">(</span><span class="n">m_</span><span class="p">.</span><span class="n">N</span><span class="p">(),</span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">aE</span><span class="p">(</span><span class="n">m_</span><span class="p">.</span><span class="n">N</span><span class="p">(),</span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="cm">/* ... */</span>
+<span class="w">          </span><span class="n">src</span><span class="p">(</span><span class="n">m_</span><span class="p">.</span><span class="n">N</span><span class="p">(),</span><span class="w"> </span><span class="n">T</span><span class="p">{})</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h2 id="jazykove-prvky">Jazykové prvky<a class="headerlink" href="#jazykove-prvky" title="Permanent link">&para;</a></h2>
+<h3 id="reference-jako-cleny">Reference jako členy<a class="headerlink" href="#reference-jako-cleny" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">const</span><span class="w"> </span><span class="n">Mesh</span><span class="o">&amp;</span><span class="w"> </span><span class="n">m</span><span class="p">;</span>
+<span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">psi</span><span class="p">;</span>
+</code></pre></div>
+
+<ul>
+<li><code>m</code> je <strong>konstantní reference</strong> na síť — matice síť nevlastní ani nekopíruje,
+  jen na ni odkazuje (síť žije v solveru).</li>
+<li><code>psi</code> je <strong>nekonstantní reference</strong> na řešené pole — Jacobi sweep zapisuje
+  přímo do něj.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Reference členy a životnost</p>
+<p>Reference se musí inicializovat v konstruktoru (nelze později „přesměrovat")
+a objekt, na který ukazují, musí žít déle než <code>fvMatrix</code>. Tady to
+platí — matice je dočasná, síť i pole žijí v solveru.</p>
+</div>
+
+<h3 id="koeficienty-vzdy-double-zdroj-typu-t">Koeficienty vždy <code>double</code>, zdroj typu <code>T</code><a class="headerlink" href="#koeficienty-vzdy-double-zdroj-typu-t" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">aP</span><span class="p">,</span><span class="w"> </span><span class="n">aE</span><span class="p">,</span><span class="w"> </span><span class="p">...;</span><span class="w">   </span><span class="c1">// skalární koeficienty</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w">      </span><span class="n">src</span><span class="p">;</span><span class="w">           </span><span class="c1">// T = double NEBO Vec3</span>
+</code></pre></div>
+
+<p>Klíčový trik šablony: <strong>koeficienty matice jsou skalární i pro vektorovou
+rovnici</strong>. Hybnostní rovnice pro <code>u, v, w</code> má stejné koeficienty (stejná
+geometrie, stejné toky), liší se jen pravá strana. Proto <code>src</code> je typu <code>T</code>, ale
+<code>aP...aB</code> jsou vždy <code>double</code>. Tím jedna šablona pokryje obojí.</p>
+<h2 id="jacobi-resic">Jacobi řešič<a class="headerlink" href="#jacobi-resic" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">solveWithExtra</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">extra</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">scale</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">sweeps</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">tmp</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">());</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">s</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">s</span><span class="o">&lt;</span><span class="n">sweeps</span><span class="p">;</span><span class="o">++</span><span class="n">s</span><span class="p">){</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">res</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for collapse(3) reduction(+:res)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">k</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nz</span><span class="p">;</span><span class="o">++</span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">ny</span><span class="p">;</span><span class="o">++</span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">){</span>
+<span class="w">            </span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">);</span>
+<span class="w">            </span><span class="n">T</span><span class="w"> </span><span class="n">rhs</span><span class="o">=</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">m</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="w"> </span><span class="n">rhs</span><span class="o">=</span><span class="n">rhs</span><span class="o">+</span><span class="p">(</span><span class="n">scale</span><span class="o">*</span><span class="n">extra</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">rhs</span><span class="o">=</span><span class="n">rhs</span><span class="o">-</span><span class="p">(</span><span class="n">aE</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">psi</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">)]);</span>
+<span class="w">            </span><span class="cm">/* ... ostatní sousedé ... */</span>
+<span class="w">            </span><span class="n">T</span><span class="w"> </span><span class="n">np</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="o">*</span><span class="n">rhs</span><span class="p">;</span>
+<span class="w">            </span><span class="n">res</span><span class="o">+=</span><span class="n">mag2</span><span class="p">(</span><span class="n">np</span><span class="o">-</span><span class="n">psi</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span><span class="w">     </span><span class="c1">// ← mag2 přetížené pro double i Vec3</span>
+<span class="w">            </span><span class="n">tmp</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">np</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">swap</span><span class="p">(</span><span class="n">psi</span><span class="p">.</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">tmp</span><span class="p">);</span><span class="w">        </span><span class="c1">// ← prohození místo kopie</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">s</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">res0</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">/</span><span class="n">res0</span><span class="o">&lt;</span><span class="mf">1e-3</span><span class="p">)</span><span class="w"> </span><span class="k">break</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="jacobi-vs-gaussseidel">Jacobi vs. Gauss–Seidel<a class="headerlink" href="#jacobi-vs-gaussseidel" title="Permanent link">&para;</a></h3>
+<p>Jacobi čte hodnoty <code>psi</code> z <strong>minulého</strong> sweepu (zapisuje do odděleného <code>tmp</code>),
+takže iterace jsou <strong>nezávislé → paralelizovatelné</strong>. Gauss–Seidel by četl
+právě aktualizované hodnoty (sériový). Viz <a href="theory__09-parallel.html">Paralelizace</a>.</p>
+<h3 id="stdswap-misto-kopie"><code>std::swap</code> místo kopie<a class="headerlink" href="#stdswap-misto-kopie" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">std</span><span class="o">::</span><span class="n">swap</span><span class="p">(</span><span class="n">psi</span><span class="p">.</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">tmp</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Prohodí vnitřní buffery dvou vektorů v konstantním čase (jen přehodí ukazatele),
+místo kopírování milionů prvků. Po swapu <code>psi</code> obsahuje nové hodnoty.</p>
+<h3 id="extra-a-scale-tlakovy-gradient-bez-kopie-matice"><code>extra</code> a <code>scale</code> — tlakový gradient bez kopie matice<a class="headerlink" href="#extra-a-scale-tlakovy-gradient-bez-kopie-matice" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">UEqn</span><span class="p">.</span><span class="n">solveWithExtra</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">m</span><span class="p">.</span><span class="n">V</span><span class="p">,</span><span class="w"> </span><span class="mi">40</span><span class="p">);</span><span class="w">   </span><span class="c1">// řeší A·u = src − V·∇p</span>
+</code></pre></div>
+
+<p>Místo aby se do <code>src</code> napevno přičetl tlakový gradient (a matice se musela
+kopírovat mezi iteracemi SIMPLE), předá se gradient <code>extra</code> zvlášť a přičte se
+za běhu (<code>rhs += scale*extra[c]</code>). Šetří kopii velké matice.</p>
+<h2 id="pomocne-metody-pro-simple">Pomocné metody pro SIMPLE<a class="headerlink" href="#pomocne-metody-pro-simple" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="n">volScalar</span><span class="w"> </span><span class="nf">A</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">   </span><span class="c1">// a_P / V  → koeficient pro HbyA</span>
+<span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w">  </span><span class="n">H</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">   </span><span class="c1">// (src − Σ a_nb·ψ_nb) / V  → operátor H</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">relax</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">alpha</span><span class="p">);</span><span class="w">  </span><span class="c1">// implicitní podrelaxace: aP/=α, src+=(aP_new−aP_old)·ψ</span>
+</code></pre></div>
+
+<p>Tyto metody implementují členy z odvození SIMPLE (viz
+<a href="theory__04-simple.html">SIMPLE</a>). <code>A()</code> a <code>H()</code> se používají k sestavení
+<code>HbyA = H/A</code> a tlakové rovnice. <code>relax()</code> provádí implicitní podrelaxaci
+rychlosti zvýšením diagonály.</p>
+<h3 id="pevne-bunky-v-relax-a-a">Pevné buňky v <code>relax</code> a <code>A</code><a class="headerlink" href="#pevne-bunky-v-relax-a-a" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">relax</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">alpha</span><span class="p">){</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span><span class="o">++</span><span class="n">c</span><span class="p">){</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="w"> </span><span class="k">continue</span><span class="p">;</span><span class="w">        </span><span class="c1">// pevné buňky se nepodrelaxují</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">aOld</span><span class="o">=</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">/=</span><span class="n">alpha</span><span class="p">;</span>
+<span class="w">        </span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="p">(</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">aOld</span><span class="p">)</span><span class="o">*</span><span class="n">psi</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Pevné buňky mají <code>aP=1</code> (identita) a přeskakují se, aby si identitu udržely.</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="cpp__03-mesh.html">
+        ← Mesh.hpp — síť a maska</a>
+    
+    
+      <a class="next" href="cpp__05-cgsolver.html">
+        CgSolver.hpp — lambda a workspace →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Navierovy–Stokesovy rovnice — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="active">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#navierovystokesovy-rovnice">Navierovy–Stokesovy rovnice</a><ul>
+<li><a href="#zakon-zachovani-hmoty-kontinuita">Zákon zachování hmoty (kontinuita)</a></li>
+<li><a href="#zakon-zachovani-hybnosti">Zákon zachování hybnosti</a></li>
+<li><a href="#reynoldsovo-cislo">Reynoldsovo číslo</a></li>
+<li><a href="#od-spojitych-rovnic-k-diskretnim">Od spojitých rovnic k diskrétním</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="navierovystokesovy-rovnice">Navierovy–Stokesovy rovnice<a class="headerlink" href="#navierovystokesovy-rovnice" title="Permanent link">&para;</a></h1>
+<p>Řešič počítá <strong>nestlačitelné laminární proudění</strong>. Výchozím bodem jsou
+Navierovy–Stokesovy rovnice — vyjádření zákona zachování hmoty a hybnosti pro
+tekutinu.</p>
+<h2 id="zakon-zachovani-hmoty-kontinuita">Zákon zachování hmoty (kontinuita)<a class="headerlink" href="#zakon-zachovani-hmoty-kontinuita" title="Permanent link">&para;</a></h2>
+<p>Pro nestlačitelnou tekutinu (konstantní hustota $\rho$) říká, že kolik tekutiny
+do libovolného objemu vteče, tolik musí i vytéct:</p>
+<p>$$\nabla \cdot \mathbf{u} = 0$$</p>
+<p>kde $\mathbf{u} = (u, v, w)$ je vektor rychlosti. Rozepsáno do složek:</p>
+<p>$$\frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} + \frac{\partial w}{\partial z} = 0$$</p>
+<p>Tato rovnice je <strong>klíčová obtíž</strong> celého řešiče: neobsahuje tlak, ale přitom
+musí být splněna. Algoritmus SIMPLE existuje právě proto, aby spojil tlak
+s touto podmínkou (viz <a href="theory__04-simple.html">SIMPLE</a>).</p>
+<h2 id="zakon-zachovani-hybnosti">Zákon zachování hybnosti<a class="headerlink" href="#zakon-zachovani-hybnosti" title="Permanent link">&para;</a></h2>
+<p>Pro každou složku rychlosti (ustálený stav, $\partial/\partial t = 0$):</p>
+<p>$$\underbrace{\nabla \cdot (\mathbf{u}\,\mathbf{u})}<em _text_tlak="\text{tlak">{\text{konvekce}}
+= \underbrace{-\frac{1}{\rho}\nabla p}</em>
++ \underbrace{\nu\,\nabla^2 \mathbf{u}}_{\text{difúze}}$$}</p>
+<p>Jednotlivé členy:</p>
+<ul>
+<li><strong>Konvekce</strong> $\nabla\cdot(\mathbf{u}\mathbf{u})$ — přenos hybnosti samotným
+  prouděním. Nelineární (rychlost krát rychlost) → zdroj největších numerických
+  potíží.</li>
+<li><strong>Tlakový gradient</strong> $-\frac{1}{\rho}\nabla p$ — síla tlačící tekutinu z míst
+  vysokého do nízkého tlaku.</li>
+<li><strong>Difúze</strong> $\nu\nabla^2\mathbf{u}$ — vyhlazování rychlostního pole vlivem
+  vazkosti $\nu$ (kinematická viskozita).</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Konvence v kódu</p>
+<p>V řešiči je hybnostní rovnice sestavena jako
+<code>UEqn = div(φ, U) − ν·laplacian(U)</code> a postavena tak, aby se rovnala
+zápornému tlakovému gradientu. Viz
+<a href="cpp__06-simple.html">Simple.cpp → buildUEqn</a>.</p>
+</div>
+
+<h2 id="reynoldsovo-cislo">Reynoldsovo číslo<a class="headerlink" href="#reynoldsovo-cislo" title="Permanent link">&para;</a></h2>
+<p>Bezrozměrné číslo charakterizující poměr setrvačných a vazkých sil:</p>
+<p>$$\mathrm{Re} = \frac{U \, D}{\nu}$$</p>
+<p>kde $U$ je charakteristická rychlost (zde $U_{in} = 1$ m/s) a $D$ délkový rozměr
+(zde strana krychle $D = 0{,}2$ m). Z toho se v řešiči dopočítává viskozita:</p>
+<p>$$\nu = \frac{U_{in} \, D}{\mathrm{Re}} = \frac{1 \cdot 0{,}2}{20} = 0{,}01 \;\text{m}^2/\text{s}$$</p>
+<p><strong>Proč Re = 20?</strong> Pro obtékání krychle/válce je proudění:</p>
+<table>
+<thead>
+<tr>
+<th>Re</th>
+<th>Charakter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; ~1</td>
+<td>plíživé (Stokesovo), symetrické</td>
+</tr>
+<tr>
+<td>~20</td>
+<td><strong>ustálené, laminární, symetrický úplav</strong> ← náš případ</td>
+</tr>
+<tr>
+<td>~40–50</td>
+<td>začínají oscilace, odtrhávání vírů</td>
+</tr>
+<tr>
+<td>&gt; ~150</td>
+<td>von Kármánova vírová cesta (nestacionární)</td>
+</tr>
+</tbody>
+</table>
+<p>Při Re = 20 existuje <strong>jedno ustálené řešení</strong>, které SIMPLE najde iterací. To je
+ideální pro řešič bez časové smyčky.</p>
+<h2 id="od-spojitych-rovnic-k-diskretnim">Od spojitých rovnic k diskrétním<a class="headerlink" href="#od-spojitych-rovnic-k-diskretnim" title="Permanent link">&para;</a></h2>
+<p>Tyto parciální diferenciální rovnice nelze řešit analyticky pro obecnou
+geometrii. Proto je převedeme na soustavu algebraických rovnic metodou
+<strong>konečných objemů</strong> — viz <a href="theory__02-fvm.html">další stránka</a>.</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="index.html">
+        ← Přehled projektu</a>
+    
+    
+      <a class="next" href="theory__02-fvm.html">
+        2. Metoda konečných objemů →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

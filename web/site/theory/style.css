@@ -1,0 +1,97 @@
+:root{
+  --bg:#0f1419; --panel:#161b22; --border:#2a3138;
+  --fg:#d6dde6; --muted:#8b97a3; --accent:#4fa8ff; --accent2:#7ee787;
+  --code-bg:#1c2128; --sidebar-w:290px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.sidebar{
+  position:fixed; top:0; left:0; width:var(--sidebar-w); height:100vh;
+  background:var(--panel); border-right:1px solid var(--border);
+  overflow-y:auto; padding:20px 0;
+}
+.brand{display:flex; gap:12px; align-items:center; padding:0 20px 18px;
+  border-bottom:1px solid var(--border); margin-bottom:12px}
+.brand .logo{font-size:28px}
+.brand small{display:block; color:var(--muted); font-size:12px}
+.nav-section{padding:6px 0}
+.nav-section h4{margin:10px 20px 4px; font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--muted)}
+.nav-section ul{list-style:none; margin:0; padding:0}
+.nav-section a{display:block; padding:6px 20px; color:var(--fg);
+  text-decoration:none; font-size:14px; border-left:3px solid transparent}
+.nav-section a:hover{background:rgba(79,168,255,.08)}
+.nav-section a.active{border-left-color:var(--accent);
+  background:rgba(79,168,255,.12); color:var(--accent)}
+
+/* ── Obsah ───────────────────────────────────────────── */
+main{margin-left:var(--sidebar-w); padding:48px 56px; max-width:980px}
+.content h1{font-size:30px; margin:0 0 .4em; border-bottom:2px solid var(--border);
+  padding-bottom:.3em}
+.content h2{font-size:23px; margin:1.6em 0 .5em; color:var(--accent)}
+.content h3{font-size:18px; margin:1.3em 0 .4em; color:var(--accent2)}
+.content p{margin:.7em 0}
+.content a{color:var(--accent)}
+.content code{background:var(--code-bg); padding:.15em .4em; border-radius:4px;
+  font:14px/1.5 "SF Mono",Menlo,Consolas,monospace}
+.content pre{background:var(--code-bg); border:1px solid var(--border);
+  border-radius:8px; padding:16px; overflow-x:auto; margin:1em 0}
+.content pre code{background:none; padding:0}
+.content table{border-collapse:collapse; margin:1em 0; width:100%}
+.content th,.content td{border:1px solid var(--border); padding:8px 12px;
+  text-align:left}
+.content th{background:var(--panel)}
+.content blockquote{border-left:4px solid var(--accent); margin:1em 0;
+  padding:.4em 1em; background:var(--panel); color:var(--muted)}
+.headerlink{text-decoration:none; opacity:0; margin-left:.4em}
+h1:hover .headerlink,h2:hover .headerlink,h3:hover .headerlink{opacity:.5}
+
+/* admonition */
+.admonition{border:1px solid var(--border); border-left:4px solid var(--accent);
+  border-radius:6px; padding:12px 16px; margin:1em 0; background:var(--panel)}
+.admonition-title{font-weight:600; margin:0 0 .3em}
+.admonition.note{border-left-color:var(--accent)}
+.admonition.warning{border-left-color:#ffb86c}
+.admonition.tip{border-left-color:var(--accent2)}
+
+/* obsah stránky */
+.toc-box{background:var(--panel); border:1px solid var(--border);
+  border-radius:8px; padding:10px 16px; margin:0 0 24px; font-size:14px}
+.toc-box summary{cursor:pointer; color:var(--muted); font-weight:600}
+.toc-box ul{margin:.5em 0}
+
+/* prev/next */
+.page-nav{display:flex; justify-content:space-between; margin-top:48px;
+  padding-top:20px; border-top:1px solid var(--border); gap:12px}
+.page-nav a{color:var(--accent); text-decoration:none; padding:10px 16px;
+  border:1px solid var(--border); border-radius:8px; max-width:48%}
+.page-nav a:hover{background:var(--panel)}
+.page-nav .next{margin-left:auto; text-align:right}
+
+/* mobil */
+#menu-toggle{display:none; position:fixed; top:12px; left:12px; z-index:20;
+  background:var(--panel); color:var(--fg); border:1px solid var(--border);
+  border-radius:6px; font-size:20px; padding:4px 10px; cursor:pointer}
+@media(max-width:860px){
+  .sidebar{transform:translateX(-100%); transition:.2s; z-index:15}
+  .sidebar.open{transform:none}
+  main{margin-left:0; padding:64px 20px 40px}
+  #menu-toggle{display:block}
+}
+
+/* Pygments (codehilite) — tmavé schéma */
+.highlight .k,.highlight .kt,.highlight .kd{color:#ff7b72}
+.highlight .n{color:#d6dde6}
+.highlight .c1,.highlight .cm,.highlight .c{color:#8b949e; font-style:italic}
+.highlight .s,.highlight .s1,.highlight .s2,.highlight .se{color:#a5d6ff}
+.highlight .mi,.highlight .mf,.highlight .m{color:#79c0ff}
+.highlight .o,.highlight .p{color:#d6dde6}
+.highlight .nf,.highlight .fm{color:#d2a8ff}
+.highlight .cp,.highlight .cpf{color:#ffa657}
+.highlight .nc,.highlight .nn{color:#7ee787}

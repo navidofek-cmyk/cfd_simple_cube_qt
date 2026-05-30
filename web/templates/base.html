@@ -79,28 +79,27 @@ ol.flow code,.card code,.note code{background:#0b0e13;border:1px solid var(--bor
 </head>
 <body>
 <nav class="sidebar">
-  <h1><a href="/">CFD Cube</a></h1>
+  <h1><a href="{{ url('index') }}">CFD Cube</a></h1>
   <span class="tag">průvodce kódem · řešič + Qt GUI</span>
 
   <div class="group">Přehled</div>
   <ul>
-    <li><a href="/" class="{% if not slug and not arch %}active{% endif %}">Úvod</a></li>
-    <li><a href="/architecture" class="{% if arch %}active{% endif %}">Architektura &amp; diagram</a></li>
+    <li><a href="{{ url('index') }}" class="{% if not slug and not arch %}active{% endif %}">Úvod</a></li>
+    <li><a href="{{ url('arch') }}" class="{% if arch %}active{% endif %}">Architektura &amp; diagram</a></li>
   </ul>
 
   {% for group, items in groups.items() %}
     <div class="group">{{ group }}</div>
     <ul>
     {% for s, m in items %}
-      <li><a href="/file/{{ s }}" class="{% if s == slug %}active{% endif %}">{{ m.title }}</a></li>
+      <li><a href="{{ url('file', s) }}" class="{% if s == slug %}active{% endif %}">{{ m.title }}</a></li>
     {% endfor %}
     </ul>
   {% endfor %}
 
-  <div class="group">Externí</div>
+  <div class="group">Teorie &amp; odkazy</div>
   <ul>
-    <li><a href="http://127.0.0.1:8000/" target="_blank" rel="noopener">
-      Teoretický web řešiče ↗</a></li>
+    <li><a href="{{ url('theory') }}">Teoretický web řešiče →</a></li>
     <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube_qt" target="_blank" rel="noopener">
       GitHub: Qt GUI ↗</a></li>
     <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube" target="_blank" rel="noopener">

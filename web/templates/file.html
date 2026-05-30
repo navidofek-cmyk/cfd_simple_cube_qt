@@ -43,8 +43,8 @@
 {% endif %}
 
 <div class="nav-bottom">
-  {% if prev %}<a href="/file/{{ prev[0] }}">← {{ prev[1] }}</a>{% else %}<span></span>{% endif %}
-  {% if next %}<a class="next" href="/file/{{ next[0] }}">{{ next[1] }} →</a>{% else %}<span></span>{% endif %}
+  {% if prev %}<a href="{{ url('file', prev[0]) }}">← {{ prev[1] }}</a>{% else %}<span></span>{% endif %}
+  {% if next %}<a class="next" href="{{ url('file', next[0]) }}">{{ next[1] }} →</a>{% else %}<span></span>{% endif %}
 </div>
 
 {% endblock %}

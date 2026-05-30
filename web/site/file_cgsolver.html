@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CgSolver.hpp — průvodce kódem</title>
+<style>
+:root{
+  --bg:#0d1117; --fg:#e6edf3; --accent:#58a6ff; --accent2:#f0a050;
+  --muted:#8b949e; --card:#161b22; --border:#30363d; --note:#1c2530;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  line-height:1.6;display:flex;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── postranní navigace ── */
+.sidebar{width:280px;flex-shrink:0;background:var(--card);
+  border-right:1px solid var(--border);padding:1.2rem;overflow-y:auto;
+  height:100vh;position:sticky;top:0}
+.sidebar h1{font-size:1.1rem;margin-bottom:.2rem}
+.sidebar .tag{color:var(--muted);font-size:.78rem;margin-bottom:1rem;display:block}
+.sidebar .group{color:var(--accent2);font-size:.72rem;text-transform:uppercase;
+  letter-spacing:.05em;margin:1rem 0 .3rem;font-weight:600}
+.sidebar ul{list-style:none}
+.sidebar li a{display:block;padding:.25rem .5rem;border-radius:5px;
+  font-size:.88rem;color:var(--fg)}
+.sidebar li a:hover{background:var(--note);text-decoration:none}
+.sidebar li a.active{background:var(--accent);color:#0d1117;font-weight:600}
+
+/* ── obsah ── */
+.content{flex:1;padding:2rem 2.5rem;max-width:1000px;overflow-x:hidden}
+h2{font-size:1.9rem;margin-bottom:.3rem}
+h3{font-size:1.25rem;color:var(--accent);margin:2rem 0 .6rem;
+  border-bottom:1px solid var(--border);padding-bottom:.3rem}
+.lead{color:var(--muted);font-size:1.05rem;margin-bottom:1.5rem}
+.meta-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.chip{background:var(--card);border:1px solid var(--border);
+  padding:.25rem .7rem;border-radius:1rem;font-size:.8rem;color:var(--muted)}
+.chip b{color:var(--fg)}
+
+.note{background:var(--note);border-left:3px solid var(--accent);
+  padding:.8rem 1rem;border-radius:0 6px 6px 0;margin:.6rem 0 1rem;
+  font-size:.95rem}
+.note.star{border-left-color:var(--accent2)}
+
+pre{background:#0b0e13;border:1px solid var(--border);border-radius:8px;
+  padding:1rem;overflow-x:auto;margin:.5rem 0 0;font-size:.84rem;line-height:1.45}
+code,pre{font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace}
+.hl pre{margin:0;border:none;padding:0;background:none}
+.lineno{color:var(--muted);font-size:.78rem;margin:.4rem 0 .2rem}
+
+.card{background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:1.4rem;margin:1rem 0}
+.card h4{font-size:1.05rem;margin-bottom:.3rem}
+.card p{color:var(--muted);font-size:.9rem}
+
+details{margin:1.5rem 0}
+details summary{cursor:pointer;color:var(--accent);font-size:.9rem;padding:.4rem 0}
+
+.nav-bottom{display:flex;justify-content:space-between;margin-top:2.5rem;
+  padding-top:1.5rem;border-top:1px solid var(--border);gap:1rem}
+.nav-bottom a{flex:1;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:.8rem 1rem;font-size:.9rem}
+.nav-bottom a.next{text-align:right}
+.missing{color:var(--accent2);font-size:.85rem;font-style:italic}
+.diagram pre{background:#0b0e13;color:#9fd0ff;border:1px solid var(--border);
+  border-radius:8px;padding:1.2rem;overflow-x:auto;font-size:.74rem;line-height:1.3}
+ol.flow{margin:.3rem 0 .3rem 1.2rem;padding:0}
+ol.flow li{margin:.4rem 0;color:var(--fg);font-size:.92rem}
+ol.flow code,.card code,.note code{background:#0b0e13;border:1px solid var(--border);
+  border-radius:4px;padding:.05rem .35rem;font-size:.85em;color:var(--accent2)}
+.footer{color:var(--muted);font-size:.8rem;margin-top:2rem;text-align:center}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.hl .hll { background-color: #49483e }
+.hl { background: #272822; color: #F8F8F2 }
+.hl .c { color: #959077 } /* Comment */
+.hl .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.hl .esc { color: #F8F8F2 } /* Escape */
+.hl .g { color: #F8F8F2 } /* Generic */
+.hl .k { color: #66D9EF } /* Keyword */
+.hl .l { color: #AE81FF } /* Literal */
+.hl .n { color: #F8F8F2 } /* Name */
+.hl .o { color: #FF4689 } /* Operator */
+.hl .x { color: #F8F8F2 } /* Other */
+.hl .p { color: #F8F8F2 } /* Punctuation */
+.hl .ch { color: #959077 } /* Comment.Hashbang */
+.hl .cm { color: #959077 } /* Comment.Multiline */
+.hl .cp { color: #959077 } /* Comment.Preproc */
+.hl .cpf { color: #959077 } /* Comment.PreprocFile */
+.hl .c1 { color: #959077 } /* Comment.Single */
+.hl .cs { color: #959077 } /* Comment.Special */
+.hl .gd { color: #FF4689 } /* Generic.Deleted */
+.hl .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.hl .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.hl .gr { color: #F8F8F2 } /* Generic.Error */
+.hl .gh { color: #F8F8F2 } /* Generic.Heading */
+.hl .gi { color: #A6E22E } /* Generic.Inserted */
+.hl .go { color: #66D9EF } /* Generic.Output */
+.hl .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.hl .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.hl .gu { color: #959077 } /* Generic.Subheading */
+.hl .gt { color: #F8F8F2 } /* Generic.Traceback */
+.hl .kc { color: #66D9EF } /* Keyword.Constant */
+.hl .kd { color: #66D9EF } /* Keyword.Declaration */
+.hl .kn { color: #FF4689 } /* Keyword.Namespace */
+.hl .kp { color: #66D9EF } /* Keyword.Pseudo */
+.hl .kr { color: #66D9EF } /* Keyword.Reserved */
+.hl .kt { color: #66D9EF } /* Keyword.Type */
+.hl .ld { color: #E6DB74 } /* Literal.Date */
+.hl .m { color: #AE81FF } /* Literal.Number */
+.hl .s { color: #E6DB74 } /* Literal.String */
+.hl .na { color: #A6E22E } /* Name.Attribute */
+.hl .nb { color: #F8F8F2 } /* Name.Builtin */
+.hl .nc { color: #A6E22E } /* Name.Class */
+.hl .no { color: #66D9EF } /* Name.Constant */
+.hl .nd { color: #A6E22E } /* Name.Decorator */
+.hl .ni { color: #F8F8F2 } /* Name.Entity */
+.hl .ne { color: #A6E22E } /* Name.Exception */
+.hl .nf { color: #A6E22E } /* Name.Function */
+.hl .nl { color: #F8F8F2 } /* Name.Label */
+.hl .nn { color: #F8F8F2 } /* Name.Namespace */
+.hl .nx { color: #A6E22E } /* Name.Other */
+.hl .py { color: #F8F8F2 } /* Name.Property */
+.hl .nt { color: #FF4689 } /* Name.Tag */
+.hl .nv { color: #F8F8F2 } /* Name.Variable */
+.hl .ow { color: #FF4689 } /* Operator.Word */
+.hl .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.hl .w { color: #F8F8F2 } /* Text.Whitespace */
+.hl .mb { color: #AE81FF } /* Literal.Number.Bin */
+.hl .mf { color: #AE81FF } /* Literal.Number.Float */
+.hl .mh { color: #AE81FF } /* Literal.Number.Hex */
+.hl .mi { color: #AE81FF } /* Literal.Number.Integer */
+.hl .mo { color: #AE81FF } /* Literal.Number.Oct */
+.hl .sa { color: #E6DB74 } /* Literal.String.Affix */
+.hl .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.hl .sc { color: #E6DB74 } /* Literal.String.Char */
+.hl .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.hl .sd { color: #E6DB74 } /* Literal.String.Doc */
+.hl .s2 { color: #E6DB74 } /* Literal.String.Double */
+.hl .se { color: #AE81FF } /* Literal.String.Escape */
+.hl .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.hl .si { color: #E6DB74 } /* Literal.String.Interpol */
+.hl .sx { color: #E6DB74 } /* Literal.String.Other */
+.hl .sr { color: #E6DB74 } /* Literal.String.Regex */
+.hl .s1 { color: #E6DB74 } /* Literal.String.Single */
+.hl .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.hl .bp { color: #F8F8F2 } /* Name.Builtin.Pseudo */
+.hl .fm { color: #A6E22E } /* Name.Function.Magic */
+.hl .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.hl .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.hl .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.hl .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.hl .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+.hl{background:none}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <h1><a href="index.html">CFD Cube</a></h1>
+  <span class="tag">průvodce kódem · řešič + Qt GUI</span>
+
+  <div class="group">Přehled</div>
+  <ul>
+    <li><a href="index.html" class="">Úvod</a></li>
+    <li><a href="architecture.html" class="">Architektura &amp; diagram</a></li>
+  </ul>
+
+  
+    <div class="group">Řešič — základní typy</div>
+    <ul>
+    
+      <li><a href="file_vec3.html" class="">Vec3.hpp</a></li>
+    
+      <li><a href="file_field.html" class="">Field.hpp</a></li>
+    
+      <li><a href="file_mesh.html" class="">Mesh.hpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — lineární algebra</div>
+    <ul>
+    
+      <li><a href="file_fvmatrix.html" class="">fvMatrix.hpp</a></li>
+    
+      <li><a href="file_cgsolver.html" class="active">CgSolver.hpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — SIMPLE</div>
+    <ul>
+    
+      <li><a href="file_simple_h.html" class="">Simple.hpp</a></li>
+    
+      <li><a href="file_simple_cpp.html" class="">Simple.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — I/O a vstup</div>
+    <ul>
+    
+      <li><a href="file_io_h.html" class="">io.hpp</a></li>
+    
+      <li><a href="file_io_cpp.html" class="">io.cpp</a></li>
+    
+      <li><a href="file_main_solver.html" class="">main.cpp (řešič)</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — data a vlákno</div>
+    <ul>
+    
+      <li><a href="file_gui_main.html" class="">main.cpp (GUI)</a></li>
+    
+      <li><a href="file_fielddata_h.html" class="">FieldData.hpp</a></li>
+    
+      <li><a href="file_fielddata_cpp.html" class="">FieldData.cpp</a></li>
+    
+      <li><a href="file_worker_h.html" class="">SolverWorker.hpp</a></li>
+    
+      <li><a href="file_worker_cpp.html" class="">SolverWorker.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — vykreslování</div>
+    <ul>
+    
+      <li><a href="file_fieldview_h.html" class="">FieldView.hpp</a></li>
+    
+      <li><a href="file_fieldview_cpp.html" class="">FieldView.cpp</a></li>
+    
+      <li><a href="file_domain3d_h.html" class="">DomainView3D.hpp</a></li>
+    
+      <li><a href="file_domain3d_cpp.html" class="">DomainView3D.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — okno a sestavení</div>
+    <ul>
+    
+      <li><a href="file_mainwindow_h.html" class="">MainWindow.hpp</a></li>
+    
+      <li><a href="file_mainwindow_cpp.html" class="">MainWindow.cpp</a></li>
+    
+      <li><a href="file_cmake.html" class="">CMakeLists.txt</a></li>
+    
+    </ul>
+  
+
+  <div class="group">Teorie &amp; odkazy</div>
+  <ul>
+    <li><a href="theory/index.html">Teoretický web řešiče →</a></li>
+    <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube_qt" target="_blank" rel="noopener">
+      GitHub: Qt GUI ↗</a></li>
+    <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube" target="_blank" rel="noopener">
+      GitHub: řešič ↗</a></li>
+  </ul>
+</nav>
+<main class="content">
+  
+
+<h2>CgSolver.hpp</h2>
+<p class="lead">Hlavička CG řešiče tlakové rovnice + workspace.</p>
+
+<div class="meta-row">
+  <span class="chip">skupina: <b>Řešič — lineární algebra</b></span>
+  <span class="chip">jazyk: <b>cpp</b></span>
+  <span class="chip"><b>72</b> řádků</span>
+</div>
+
+<div class="note"><b>Role v projektu:</b> Řeší symetrickou pozitivně definitní soustavu (tlaková Poissonova rovnice).</div>
+
+
+
+  
+  <h3>Hlavička / includy</h3>
+  <div class="hl"><div class="hl"><pre><span></span><span class="cp">#pragma once</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;fvMatrix.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;omp.h&gt;</span>
+</pre></div>
+</div>
+  
+
+  
+  <h3>Workspace
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 7)</span></h3>
+  <div class="note ">Drží pomocné vektory CG (r=reziduum, p=směr, Ap, z=předpodmíněné). `ensure(n)` alokuje jen jednou (znovupoužití mezi iteracemi SIMPLE) — v hot-loopu nechceme opakované alokace.</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">CgWorkspace</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">Ax</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">Ap</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">ensure</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">size</span><span class="p">())</span><span class="o">==</span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">        </span><span class="n">b</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">Ax</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">dir</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">Ap</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+  
+  
+  <h3>Deklarace cgSolve
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 15)</span></h3>
+  <div class="note ">Jacobiho předpodmíněný Conjugate Gradient. Tlaková matice je SPD, takže CG je optimální volba (rychlejší než Gauss-Seidel). Implementace je v Simple.cpp.</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="kr">inline</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">cgSolve</span><span class="p">(</span><span class="n">fvMatrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">CgWorkspace</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ws</span><span class="p">,</span>
+<span class="w">                    </span><span class="kt">int</span><span class="w"> </span><span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Mesh</span><span class="o">&amp;</span><span class="w"> </span><span class="n">m</span><span class="o">=</span><span class="n">M</span><span class="p">.</span><span class="n">m</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">N</span><span class="o">=</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span>
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">x</span><span class="o">=</span><span class="n">M</span><span class="p">.</span><span class="n">psi</span><span class="p">.</span><span class="n">d</span><span class="p">;</span>
+<span class="w">    </span><span class="n">ws</span><span class="p">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// y = (-A)*v  — paralelní maticové násobení</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">negAv</span><span class="o">=</span><span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">y</span><span class="p">){</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for collapse(3)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">k</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nz</span><span class="p">;</span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">ny</span><span class="p">;</span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">){</span>
+<span class="w">            </span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">);</span>
+<span class="w">            </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=-</span><span class="n">M</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aE</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="w">      </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aW</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="mi">-1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">j</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">ny</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aN</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">j</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="w">      </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aS</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="mi">-1</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">k</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nz</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aF</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">k</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="w">      </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aB</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="mi">-1</span><span class="p">)];</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">b</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=-</span><span class="n">M</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">fill</span><span class="p">(</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="w">    </span><span class="n">negAv</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">rr</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">    </span><span class="cp">#pragma omp parallel for reduction(+:rr)</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">){</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">b</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">rr</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">];}</span>
+<span class="w">    </span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">res0</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rr</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">k</span><span class="o">&lt;</span><span class="n">maxIter</span><span class="p">;</span><span class="o">++</span><span class="n">k</span><span class="p">){</span>
+<span class="w">        </span><span class="n">negAv</span><span class="p">(</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">,</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">);</span>
+
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">pAp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for reduction(+:pAp)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">pAp</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">alpha</span><span class="o">=</span><span class="n">rr</span><span class="o">/</span><span class="p">(</span><span class="n">pAp</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">);</span>
+
+<span class="w">        </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">){</span><span class="n">x</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">alpha</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">alpha</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">[</span><span class="n">c</span><span class="p">];}</span>
+
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">rr_new</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for reduction(+:rr_new)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">rr_new</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rr_new</span><span class="p">)</span><span class="o">/</span><span class="n">res0</span><span class="o">&lt;</span><span class="n">tol</span><span class="p">)</span><span class="w"> </span><span class="k">break</span><span class="p">;</span>
+
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">beta</span><span class="o">=</span><span class="n">rr_new</span><span class="o">/</span><span class="p">(</span><span class="n">rr</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">);</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+</span><span class="n">beta</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="n">rr</span><span class="o">=</span><span class="n">rr_new</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  
+  
+
+  <details>
+    <summary>📄 Zobrazit celý soubor</summary>
+    <div class="hl"><div class="hl"><pre><span></span><span class="cp">#pragma once</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;fvMatrix.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;omp.h&gt;</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">CgWorkspace</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">Ax</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">Ap</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">ensure</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">size</span><span class="p">())</span><span class="o">==</span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">        </span><span class="n">b</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">Ax</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">dir</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span><span class="w"> </span><span class="n">Ap</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kr">inline</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">cgSolve</span><span class="p">(</span><span class="n">fvMatrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="n">CgWorkspace</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ws</span><span class="p">,</span>
+<span class="w">                    </span><span class="kt">int</span><span class="w"> </span><span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Mesh</span><span class="o">&amp;</span><span class="w"> </span><span class="n">m</span><span class="o">=</span><span class="n">M</span><span class="p">.</span><span class="n">m</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">N</span><span class="o">=</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span>
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">x</span><span class="o">=</span><span class="n">M</span><span class="p">.</span><span class="n">psi</span><span class="p">.</span><span class="n">d</span><span class="p">;</span>
+<span class="w">    </span><span class="n">ws</span><span class="p">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// y = (-A)*v  — paralelní maticové násobení</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">negAv</span><span class="o">=</span><span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">y</span><span class="p">){</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for collapse(3)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">k</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nz</span><span class="p">;</span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">ny</span><span class="p">;</span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">){</span>
+<span class="w">            </span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">);</span>
+<span class="w">            </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=-</span><span class="n">M</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nx</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aE</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="w">      </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aW</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="mi">-1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">j</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">ny</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aN</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">j</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="w">      </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aS</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="mi">-1</span><span class="p">,</span><span class="n">k</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">k</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">nz</span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aF</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">)];</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">k</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span><span class="w">      </span><span class="n">y</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">M</span><span class="p">.</span><span class="n">aB</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="mi">-1</span><span class="p">)];</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">b</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=-</span><span class="n">M</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">fill</span><span class="p">(</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="w">    </span><span class="n">negAv</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">rr</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">    </span><span class="cp">#pragma omp parallel for reduction(+:rr)</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">){</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">b</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">ws</span><span class="p">.</span><span class="n">Ax</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">rr</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">];}</span>
+<span class="w">    </span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">res0</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rr</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">k</span><span class="o">&lt;</span><span class="n">maxIter</span><span class="p">;</span><span class="o">++</span><span class="n">k</span><span class="p">){</span>
+<span class="w">        </span><span class="n">negAv</span><span class="p">(</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">,</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">);</span>
+
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">pAp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for reduction(+:pAp)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">pAp</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">alpha</span><span class="o">=</span><span class="n">rr</span><span class="o">/</span><span class="p">(</span><span class="n">pAp</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">);</span>
+
+<span class="w">        </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">){</span><span class="n">x</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">alpha</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">alpha</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">Ap</span><span class="p">[</span><span class="n">c</span><span class="p">];}</span>
+
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">rr_new</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for reduction(+:rr_new)</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">rr_new</span><span class="o">+=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rr_new</span><span class="p">)</span><span class="o">/</span><span class="n">res0</span><span class="o">&lt;</span><span class="n">tol</span><span class="p">)</span><span class="w"> </span><span class="k">break</span><span class="p">;</span>
+
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">beta</span><span class="o">=</span><span class="n">rr_new</span><span class="o">/</span><span class="p">(</span><span class="n">rr</span><span class="o">+</span><span class="mf">1e-30</span><span class="p">);</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">ws</span><span class="p">.</span><span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+</span><span class="n">beta</span><span class="o">*</span><span class="n">ws</span><span class="p">.</span><span class="n">dir</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="n">rr</span><span class="o">=</span><span class="n">rr_new</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  </details>
+
+
+
+<div class="nav-bottom">
+  <a href="file_fvmatrix.html">← fvMatrix.hpp</a>
+  <a class="next" href="file_simple_h.html">Simple.hpp →</a>
+</div>
+
+
+  <div class="footer">FastAPI + uv · kód se čte živě z disku</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple.cpp — jádro řešiče — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="active">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#simplecpp-jadro-resice">Simple.cpp — jádro řešiče</a><ul>
+<li><a href="#staticke-pomocne-funkce">Statické pomocné funkce</a></li>
+<li><a href="#buildueqn-bunkovy-pristup">buildUEqn — buňkový přístup</a><ul>
+<li><a href="#proc-bunkovy-pristup">Proč buňkový přístup</a></li>
+<li><a href="#znamenkova-konvence">Znaménková konvence</a></li>
+<li><a href="#return-eq-navrat-velkeho-objektu">return eq — návrat velkého objektu</a></li>
+</ul>
+</li>
+<li><a href="#hlavni-smycka-solve">Hlavní smyčka solve()</a><ul>
+<li><a href="#auto-pro-odvozeni-typu">auto pro odvození typu</a></li>
+<li><a href="#channelsolversolve-definice-clenske-metody">ChannelSolver::solve() — definice členské metody</a></li>
+</ul>
+</li>
+<li><a href="#diagnostika-up-a-snapshoty">Diagnostika: ΔU/Δp a snapshoty</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="simplecpp-jadro-resice">Simple.cpp — jádro řešiče<a class="headerlink" href="#simplecpp-jadro-resice" title="Permanent link">&para;</a></h1>
+<p>Nejdůležitější soubor. Obsahuje sestavení obou matic a hlavní SIMPLE smyčku.
+Implementuje teorii z kapitol <a href="theory__04-simple.html">SIMPLE</a> a
+<a href="theory__05-rhie-chow.html">Rhie–Chow</a>.</p>
+<h2 id="staticke-pomocne-funkce">Statické pomocné funkce<a class="headerlink" href="#staticke-pomocne-funkce" title="Permanent link">&para;</a></h2>
+<p>Soubor obsahuje pět <code>static</code> funkcí (viditelné jen v tomto .cpp):</p>
+<table>
+<thead>
+<tr>
+<th>Funkce</th>
+<th>Vrací</th>
+<th>Účel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>buildUEqn</code></td>
+<td><code>fvMatrix&lt;Vec3&gt;</code></td>
+<td>sestaví hybnostní matici</td>
+</tr>
+<tr>
+<td><code>buildPEqn</code></td>
+<td><code>fvMatrix&lt;double&gt;</code></td>
+<td>sestaví tlakovou matici</td>
+</tr>
+<tr>
+<td><code>interpFlux</code></td>
+<td>(přes reference)</td>
+<td>toky z HbyA na stěny</td>
+</tr>
+<tr>
+<td><code>divFlux</code></td>
+<td><code>volScalar</code></td>
+<td>divergence toků (reziduum, RHS)</td>
+</tr>
+<tr>
+<td><code>gradP</code></td>
+<td><code>volVector</code></td>
+<td>gradient tlaku ve středech buněk</td>
+</tr>
+</tbody>
+</table>
+<p><code>static</code> u funkce na úrovni souboru znamená <strong>interní vazbu</strong> — funkce není
+viditelná z jiných .cpp, nezanáší globální jmenný prostor.</p>
+<h2 id="buildueqn-bunkovy-pristup">buildUEqn — buňkový přístup<a class="headerlink" href="#buildueqn-bunkovy-pristup" title="Permanent link">&para;</a></h2>
+<p>Klíčová funkce. Sestaví hybnostní rovnici tak, aby šla paralelizovat:</p>
+<div class="highlight"><pre><span></span><code><span class="k">static</span><span class="w"> </span><span class="n">fvMatrix</span><span class="o">&lt;</span><span class="n">Vec3</span><span class="o">&gt;</span><span class="w"> </span><span class="n">buildUEqn</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Mesh</span><span class="o">&amp;</span><span class="w"> </span><span class="n">m</span><span class="p">,</span>
+<span class="w">                                 </span><span class="k">const</span><span class="w"> </span><span class="n">volScalar</span><span class="o">&amp;</span><span class="w"> </span><span class="n">phiE</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">volScalar</span><span class="o">&amp;</span><span class="w"> </span><span class="n">phiN</span><span class="p">,</span>
+<span class="w">                                 </span><span class="k">const</span><span class="w"> </span><span class="n">volScalar</span><span class="o">&amp;</span><span class="w"> </span><span class="n">phiF</span><span class="p">,</span>
+<span class="w">                                 </span><span class="kt">double</span><span class="w"> </span><span class="n">nu</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">U_in</span><span class="p">,</span><span class="w"> </span><span class="n">volVector</span><span class="o">&amp;</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">fvMatrix</span><span class="o">&lt;</span><span class="n">Vec3</span><span class="o">&gt;</span><span class="w"> </span><span class="n">eq</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">);</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nu</span><span class="o">*</span><span class="n">m</span><span class="p">.</span><span class="n">Ax</span><span class="o">/</span><span class="n">m</span><span class="p">.</span><span class="n">dx</span><span class="p">,</span><span class="w"> </span><span class="cm">/* ... */</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gbx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nu</span><span class="o">*</span><span class="n">m</span><span class="p">.</span><span class="n">Ax</span><span class="o">/</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">m</span><span class="p">.</span><span class="n">dx</span><span class="p">);</span><span class="w">   </span><span class="c1">// hraniční (půl buňky)</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="n">Uin</span><span class="p">{</span><span class="n">U_in</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">};</span>
+
+<span class="w">    </span><span class="cp">#pragma omp parallel for collapse(3)</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="cm">/* všechny buňky */</span><span class="p">){</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">c</span><span class="p">]){</span><span class="w"> </span><span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="mf">1.0</span><span class="p">;</span><span class="w"> </span><span class="k">continue</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// pevná buňka = identita</span>
+
+<span class="w">        </span><span class="c1">// ── Západ ──</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">){</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">w</span><span class="o">=</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="n">i</span><span class="mi">-1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">);</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">m</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">w</span><span class="p">]){</span>
+<span class="w">                </span><span class="n">eq</span><span class="p">.</span><span class="n">aW</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-=</span><span class="n">gx</span><span class="p">;</span><span class="w"> </span><span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">gx</span><span class="p">;</span><span class="w">          </span><span class="c1">// difúze</span>
+<span class="w">                </span><span class="kt">double</span><span class="w"> </span><span class="n">f</span><span class="o">=-</span><span class="n">phiE</span><span class="p">[</span><span class="n">w</span><span class="p">];</span><span class="w">                    </span><span class="c1">// tok přes záp. stěnu</span>
+<span class="w">                </span><span class="k">if</span><span class="p">(</span><span class="n">f</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">f</span><span class="p">;</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">eq</span><span class="p">.</span><span class="n">aW</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">f</span><span class="p">;</span><span class="w"> </span><span class="c1">// upwind konvekce</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">gbx</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">                 </span><span class="c1">// pevný soused = no-slip</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">                                       </span><span class="c1">// i==0: INLET</span>
+<span class="w">            </span><span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w">  </span><span class="o">+=</span><span class="w"> </span><span class="n">gbx</span><span class="p">;</span>
+<span class="w">            </span><span class="n">eq</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">gbx</span><span class="o">*</span><span class="n">Uin</span><span class="p">;</span><span class="w">                     </span><span class="c1">// difúze ze vstupu</span>
+<span class="w">            </span><span class="n">eq</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">U_in</span><span class="o">*</span><span class="n">m</span><span class="p">.</span><span class="n">Ax</span><span class="o">*</span><span class="n">Uin</span><span class="p">;</span><span class="w">               </span><span class="c1">// konvekce ze vstupu</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// ── Východ, Jih, Sever, Zadek, Předek analogicky ──</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">eq</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="proc-bunkovy-pristup">Proč buňkový přístup<a class="headerlink" href="#proc-bunkovy-pristup" title="Permanent link">&para;</a></h3>
+<p>Každá buňka <code>c</code> zapisuje <strong>jen do svých</strong> koeficientů (<code>eq.aW[c]</code>, <code>eq.aP[c]</code>),
+sousedy jen <strong>čte</strong> (<code>phiE[w]</code>, <code>m.solid[w]</code>). Tok přes západní stěnu si přečte
+ze sousedovy hodnoty <code>phiE[w]</code> se záporným znaménkem (<code>-phiE[w]</code> = odtok na
+západ). Žádné zápisy do sousedů → <strong>žádný race condition</strong> → bezpečné pro
+<code>#pragma omp parallel for</code>. Viz <a href="theory__03-convection.html">Konvekce</a>.</p>
+<h3 id="znamenkova-konvence">Znaménková konvence<a class="headerlink" href="#znamenkova-konvence" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">eq</span><span class="p">.</span><span class="n">aW</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">gx</span><span class="p">;</span><span class="w">   </span><span class="c1">// mimodiagonála: záporná</span>
+<span class="n">eq</span><span class="p">.</span><span class="n">aP</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">gx</span><span class="p">;</span><span class="w">   </span><span class="c1">// diagonála: kladná</span>
+</code></pre></div>
+
+<p>Rovnice je <code>div − ν·laplacian</code>. Laplacián přispívá <code>+gx</code> do diagonály (kladné)
+a <code>−gx</code> mimo. Tato konvence zaručuje diagonální dominanci. (Špatné znaménko zde
+bylo původní chybou, která dávala NaN.)</p>
+<h3 id="return-eq-navrat-velkeho-objektu"><code>return eq</code> — návrat velkého objektu<a class="headerlink" href="#return-eq-navrat-velkeho-objektu" title="Permanent link">&para;</a></h3>
+<p>Funkce vrací <code>fvMatrix&lt;Vec3&gt;</code> hodnotou. Díky <strong>move semantics</strong> / <strong>NRVO</strong>
+(named return value optimization) se nekopíruje — překladač sestaví objekt
+rovnou na místě volajícího.</p>
+<h2 id="hlavni-smycka-solve">Hlavní smyčka solve()<a class="headerlink" href="#hlavni-smycka-solve" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">ChannelSolver::solve</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">volVector</span><span class="w"> </span><span class="n">Uprev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">U</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">it</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">it</span><span class="o">&lt;</span><span class="n">maxIter</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">it</span><span class="p">){</span>
+<span class="w">        </span><span class="n">Uprev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">U</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// 1. Hybnost → U*</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">UEqn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buildUEqn</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">phiE</span><span class="p">,</span><span class="n">phiN</span><span class="p">,</span><span class="n">phiF</span><span class="p">,</span><span class="w"> </span><span class="n">nu</span><span class="p">,</span><span class="n">U_in</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">);</span>
+<span class="w">        </span><span class="n">UEqn</span><span class="p">.</span><span class="n">relax</span><span class="p">(</span><span class="n">alphaU</span><span class="p">);</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">gp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gradP</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span>
+<span class="w">        </span><span class="n">UEqn</span><span class="p">.</span><span class="n">solveWithExtra</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">m</span><span class="p">.</span><span class="n">V</span><span class="p">,</span><span class="w"> </span><span class="mi">40</span><span class="p">);</span><span class="w">          </span><span class="c1">// Jacobi → U*</span>
+
+<span class="w">        </span><span class="c1">// 2. A, HbyA</span>
+<span class="w">        </span><span class="n">volScalar</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UEqn</span><span class="p">.</span><span class="n">A</span><span class="p">();</span>
+<span class="w">        </span><span class="n">volVector</span><span class="w"> </span><span class="n">Hf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UEqn</span><span class="p">.</span><span class="n">H</span><span class="p">();</span>
+<span class="w">        </span><span class="n">volScalar</span><span class="w"> </span><span class="n">rAU</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">(),</span><span class="mf">1.0</span><span class="p">);</span>
+<span class="w">        </span><span class="n">volVector</span><span class="w"> </span><span class="n">HbyA</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">());</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span><span class="o">++</span><span class="n">c</span><span class="p">){</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">c</span><span class="p">]){</span><span class="w"> </span><span class="n">rAU</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span><span class="w"> </span><span class="k">continue</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">            </span><span class="n">rAU</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="mf">1.0</span><span class="o">/</span><span class="n">A</span><span class="p">[</span><span class="n">c</span><span class="p">];</span><span class="w"> </span><span class="n">HbyA</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="n">rAU</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">*</span><span class="n">Hf</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 3.-4. toky, tlaková rovnice</span>
+<span class="w">        </span><span class="n">volScalar</span><span class="w"> </span><span class="n">pE</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">()),</span><span class="n">pN</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">()),</span><span class="n">pF2</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">());</span>
+<span class="w">        </span><span class="n">interpFlux</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">HbyA</span><span class="p">,</span><span class="w"> </span><span class="n">pE</span><span class="p">,</span><span class="n">pN</span><span class="p">,</span><span class="n">pF2</span><span class="p">);</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">pEqn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buildPEqn</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">rAU</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">divH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">divFlux</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">pE</span><span class="p">,</span><span class="n">pN</span><span class="p">,</span><span class="n">pF2</span><span class="p">,</span><span class="w"> </span><span class="n">U_in</span><span class="p">);</span>
+<span class="w">        </span><span class="cp">#pragma omp parallel for</span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span><span class="o">++</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="n">pEqn</span><span class="p">.</span><span class="n">src</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+=</span><span class="n">divH</span><span class="p">[</span><span class="n">c</span><span class="p">];</span>
+<span class="w">        </span><span class="n">cgSolve</span><span class="p">(</span><span class="n">pEqn</span><span class="p">,</span><span class="w"> </span><span class="n">cgWork</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-6</span><span class="p">);</span><span class="w">          </span><span class="c1">// CG → p</span>
+
+<span class="w">        </span><span class="c1">// 5. Rhie–Chow korekce toků</span>
+<span class="w">        </span><span class="c1">// 6. korekce rychlosti U = HbyA − rAU·∇p</span>
+<span class="w">        </span><span class="c1">// 7. podrelaxace tlaku</span>
+<span class="w">        </span><span class="c1">// 8. reziduum + ΔU/Δp + snapshoty</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="auto-pro-odvozeni-typu"><code>auto</code> pro odvození typu<a class="headerlink" href="#auto-pro-odvozeni-typu" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">auto</span><span class="w"> </span><span class="n">UEqn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buildUEqn</span><span class="p">(...);</span><span class="w">   </span><span class="c1">// typ fvMatrix&lt;Vec3&gt; odvozen</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">gp</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">gradP</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span><span class="w">       </span><span class="c1">// volVector</span>
+</code></pre></div>
+
+<p><code>auto</code> nechá překladač odvodit typ z pravé strany — méně psaní, bezpečné.</p>
+<h3 id="channelsolversolve-definice-clenske-metody"><code>ChannelSolver::solve()</code> — definice členské metody<a class="headerlink" href="#channelsolversolve-definice-clenske-metody" title="Permanent link">&para;</a></h3>
+<p><code>::</code> je <strong>scope resolution operator</strong> — definuje metodu <code>solve</code> patřící třídě
+<code>ChannelSolver</code> (deklarované v <a href="cpp__00-overview.html">Simple.hpp</a>). Tělo je
+mimo definici třídy, v .cpp.</p>
+<h2 id="diagnostika-up-a-snapshoty">Diagnostika: ΔU/Δp a snapshoty<a class="headerlink" href="#diagnostika-up-a-snapshoty" title="Permanent link">&para;</a></h2>
+<p>Smyčka navíc počítá relativní L2 změnu polí mezi iteracemi a umí ukládat
+snapshoty:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#pragma omp parallel for reduction(+:cont,dU2,dP2,U2,P2)</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">m</span><span class="p">.</span><span class="n">N</span><span class="p">();</span><span class="o">++</span><span class="n">c</span><span class="p">){</span>
+<span class="w">    </span><span class="n">cont</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="n">resField</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span><span class="w">          </span><span class="c1">// kontinuitní reziduum</span>
+<span class="w">    </span><span class="n">dU2</span><span class="w">  </span><span class="o">+=</span><span class="w"> </span><span class="n">mag2</span><span class="p">(</span><span class="n">U</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">Uprev</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span><span class="w">             </span><span class="c1">// změna rychlosti</span>
+<span class="w">    </span><span class="n">dP2</span><span class="w">  </span><span class="o">+=</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">pOld</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">-</span><span class="n">pOld</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span><span class="w">   </span><span class="c1">// změna tlaku</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Více proměnných v jedné <code>reduction</code> klauzuli. Výstup se zapisuje živě do
+<code>convergence.dat</code>. Viz <a href="solver__03-validation.html">Validace</a>.</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="cpp__05-cgsolver.html">
+        ← CgSolver.hpp — lambda a workspace</a>
+    
+    
+      <a class="next" href="cpp__07-io.html">
+        io.cpp — vstup/výstup →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

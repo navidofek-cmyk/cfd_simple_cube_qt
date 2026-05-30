@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konvekce a upwind schéma — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="active">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#konvekce-a-upwind-schema">Konvekce a upwind schéma</a><ul>
+<li><a href="#tok-pres-stenu">Tok přes stěnu</a></li>
+<li><a href="#centralni-schema-a-proc-nestaci">Centrální schéma — a proč nestačí</a></li>
+<li><a href="#upwind-schema-1-rad">Upwind schéma (1. řád)</a><ul>
+<li><a href="#prispevky-do-matice">Příspěvky do matice</a></li>
+</ul>
+</li>
+<li><a href="#bunkovy-vs-stenovy-pristup-dulezite-pro-paralelizaci">Buňkový vs. stěnový přístup (důležité pro paralelizaci)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="konvekce-a-upwind-schema">Konvekce a upwind schéma<a class="headerlink" href="#konvekce-a-upwind-schema" title="Permanent link">&para;</a></h1>
+<p>Konvektivní člen $\nabla\cdot(\mathbf{u}\,\phi)$ je nelineární a numericky
+citlivý. Způsob jeho diskretizace rozhoduje o stabilitě celého řešiče.</p>
+<h2 id="tok-pres-stenu">Tok přes stěnu<a class="headerlink" href="#tok-pres-stenu" title="Permanent link">&para;</a></h2>
+<p>Po integraci přes buňku (Gaussova věta) dostaneme součet konvektivních toků:</p>
+<p>$$\int_V \nabla\cdot(\mathbf{u}\phi)\,dV = \sum_f \phi_f \, (\mathbf{u}_f\cdot\mathbf{n}_f)\,A_f
+= \sum_f \phi_f \, F_f$$</p>
+<p>kde $F_f = (\mathbf{u}_f\cdot\mathbf{n}_f)\,A_f$ je <strong>objemový tok</strong> přes stěnu
+(kolik tekutiny protéká stěnou za jednotku času). V kódu jsou tyto toky uloženy
+jako <code>phiE</code>, <code>phiN</code>, <code>phiF</code> (tok přes východní / severní / přední stěnu vlastníka).</p>
+<p>Otázka je: jakou hodnotu $\phi_f$ dosadit na stěnu, když máme hodnoty jen ve
+středech buněk?</p>
+<h2 id="centralni-schema-a-proc-nestaci">Centrální schéma — a proč nestačí<a class="headerlink" href="#centralni-schema-a-proc-nestaci" title="Permanent link">&para;</a></h2>
+<p>Nejpřesnější (2. řád) by bylo lineární interpolovat:</p>
+<p>$$\phi_f = \tfrac{1}{2}(\phi_P + \phi_E)$$</p>
+<p>Pro konvekci ale centrální schéma vede k <strong>nefyzikálním oscilacím</strong> při vyšším
+toku (záporné koeficienty v matici, ztráta diagonální dominance). Řešení by
+mohlo kmitat a divergovat.</p>
+<h2 id="upwind-schema-1-rad">Upwind schéma (1. řád)<a class="headerlink" href="#upwind-schema-1-rad" title="Permanent link">&para;</a></h2>
+<p>Robustní volba: hodnotu na stěně vezmeme z buňky <strong>proti proudu</strong> (odkud
+tekutina teče):</p>
+<p>$$\phi_f = \begin{cases}
+\phi_P &amp; \text{když } F_f \geq 0 \quad (\text{teče z } P \text{ ven}) \
+\phi_E &amp; \text{když } F_f &lt; 0 \quad (\text{teče dovnitř } P)
+\end{cases}$$</p>
+<p>To zaručuje, že příspěvky do matice mají správné znaménko a diagonála zůstává
+dominantní → stabilní řešení.</p>
+<h3 id="prispevky-do-matice">Příspěvky do matice<a class="headerlink" href="#prispevky-do-matice" title="Permanent link">&para;</a></h3>
+<p>Pro východní stěnu buňky P (s tokem $F = \phi_E^{\text{flux}}$):</p>
+<div class="highlight"><pre><span></span><code>if (F &gt;= 0) { aP += F;  aW[soused] += -F; }   // odtok z P
+else        { aE += F;  aP[soused] += -F; }   // přítok do P
+</code></pre></div>
+
+<p>Tento vzorec se v kódu objevuje v
+<a href="cpp__06-simple.html"><code>buildUEqn</code></a> pro každou ze 6 stěn.</p>
+<div class="admonition warning">
+<p class="admonition-title">Cena za stabilitu</p>
+<p>Upwind 1. řádu zavádí <strong>numerickou difúzi</strong> — uměle vyhlazuje
+ostré gradienty, jako by byla viskozita o něco vyšší. Pro Re = 20 na jemné síti
+je to zanedbatelné; pro vysoké Re by bylo potřeba schéma vyššího řádu (např.
+linear-upwind, QUICK).</p>
+</div>
+
+<h2 id="bunkovy-vs-stenovy-pristup-dulezite-pro-paralelizaci">Buňkový vs. stěnový přístup (důležité pro paralelizaci)<a class="headerlink" href="#bunkovy-vs-stenovy-pristup-dulezite-pro-paralelizaci" title="Permanent link">&para;</a></h2>
+<p>Konvekci lze sestavit dvěma způsoby:</p>
+<p><strong>Stěnový</strong> (původní): projdu stěny, každá zapíše do <strong>dvou</strong> buněk (vlastník +
+soused). Jednoduché, ale při paralelizaci vzniká <em>race condition</em> — dvě vlákna
+píšou do stejné buňky.</p>
+<p><strong>Buňkový</strong> (paralelní): každá buňka projde svých 6 stěn a zapíše <strong>jen do
+sebe</strong>. Tok přes západní stěnu si přečte ze sousedovy hodnoty <code>phiE[w]</code>. Žádné
+zápisy do sousedů → bezpečné pro OpenMP.</p>
+<p>Tento přepis byl klíčový pro paralelizaci — viz
+<a href="theory__09-parallel.html">Paralelizace</a> a
+<a href="cpp__06-simple.html">Simple.cpp</a>.</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="theory__02-fvm.html">
+        ← 2. Metoda konečných objemů</a>
+    
+    
+      <a class="next" href="theory__04-simple.html">
+        4. Algoritmus SIMPLE →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>

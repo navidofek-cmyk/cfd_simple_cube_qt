@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FieldView.cpp — průvodce kódem</title>
+<style>
+:root{
+  --bg:#0d1117; --fg:#e6edf3; --accent:#58a6ff; --accent2:#f0a050;
+  --muted:#8b949e; --card:#161b22; --border:#30363d; --note:#1c2530;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  line-height:1.6;display:flex;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── postranní navigace ── */
+.sidebar{width:280px;flex-shrink:0;background:var(--card);
+  border-right:1px solid var(--border);padding:1.2rem;overflow-y:auto;
+  height:100vh;position:sticky;top:0}
+.sidebar h1{font-size:1.1rem;margin-bottom:.2rem}
+.sidebar .tag{color:var(--muted);font-size:.78rem;margin-bottom:1rem;display:block}
+.sidebar .group{color:var(--accent2);font-size:.72rem;text-transform:uppercase;
+  letter-spacing:.05em;margin:1rem 0 .3rem;font-weight:600}
+.sidebar ul{list-style:none}
+.sidebar li a{display:block;padding:.25rem .5rem;border-radius:5px;
+  font-size:.88rem;color:var(--fg)}
+.sidebar li a:hover{background:var(--note);text-decoration:none}
+.sidebar li a.active{background:var(--accent);color:#0d1117;font-weight:600}
+
+/* ── obsah ── */
+.content{flex:1;padding:2rem 2.5rem;max-width:1000px;overflow-x:hidden}
+h2{font-size:1.9rem;margin-bottom:.3rem}
+h3{font-size:1.25rem;color:var(--accent);margin:2rem 0 .6rem;
+  border-bottom:1px solid var(--border);padding-bottom:.3rem}
+.lead{color:var(--muted);font-size:1.05rem;margin-bottom:1.5rem}
+.meta-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.chip{background:var(--card);border:1px solid var(--border);
+  padding:.25rem .7rem;border-radius:1rem;font-size:.8rem;color:var(--muted)}
+.chip b{color:var(--fg)}
+
+.note{background:var(--note);border-left:3px solid var(--accent);
+  padding:.8rem 1rem;border-radius:0 6px 6px 0;margin:.6rem 0 1rem;
+  font-size:.95rem}
+.note.star{border-left-color:var(--accent2)}
+
+pre{background:#0b0e13;border:1px solid var(--border);border-radius:8px;
+  padding:1rem;overflow-x:auto;margin:.5rem 0 0;font-size:.84rem;line-height:1.45}
+code,pre{font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace}
+.hl pre{margin:0;border:none;padding:0;background:none}
+.lineno{color:var(--muted);font-size:.78rem;margin:.4rem 0 .2rem}
+
+.card{background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:1.4rem;margin:1rem 0}
+.card h4{font-size:1.05rem;margin-bottom:.3rem}
+.card p{color:var(--muted);font-size:.9rem}
+
+details{margin:1.5rem 0}
+details summary{cursor:pointer;color:var(--accent);font-size:.9rem;padding:.4rem 0}
+
+.nav-bottom{display:flex;justify-content:space-between;margin-top:2.5rem;
+  padding-top:1.5rem;border-top:1px solid var(--border);gap:1rem}
+.nav-bottom a{flex:1;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:.8rem 1rem;font-size:.9rem}
+.nav-bottom a.next{text-align:right}
+.missing{color:var(--accent2);font-size:.85rem;font-style:italic}
+.diagram pre{background:#0b0e13;color:#9fd0ff;border:1px solid var(--border);
+  border-radius:8px;padding:1.2rem;overflow-x:auto;font-size:.74rem;line-height:1.3}
+ol.flow{margin:.3rem 0 .3rem 1.2rem;padding:0}
+ol.flow li{margin:.4rem 0;color:var(--fg);font-size:.92rem}
+ol.flow code,.card code,.note code{background:#0b0e13;border:1px solid var(--border);
+  border-radius:4px;padding:.05rem .35rem;font-size:.85em;color:var(--accent2)}
+.footer{color:var(--muted);font-size:.8rem;margin-top:2rem;text-align:center}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.hl .hll { background-color: #49483e }
+.hl { background: #272822; color: #F8F8F2 }
+.hl .c { color: #959077 } /* Comment */
+.hl .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.hl .esc { color: #F8F8F2 } /* Escape */
+.hl .g { color: #F8F8F2 } /* Generic */
+.hl .k { color: #66D9EF } /* Keyword */
+.hl .l { color: #AE81FF } /* Literal */
+.hl .n { color: #F8F8F2 } /* Name */
+.hl .o { color: #FF4689 } /* Operator */
+.hl .x { color: #F8F8F2 } /* Other */
+.hl .p { color: #F8F8F2 } /* Punctuation */
+.hl .ch { color: #959077 } /* Comment.Hashbang */
+.hl .cm { color: #959077 } /* Comment.Multiline */
+.hl .cp { color: #959077 } /* Comment.Preproc */
+.hl .cpf { color: #959077 } /* Comment.PreprocFile */
+.hl .c1 { color: #959077 } /* Comment.Single */
+.hl .cs { color: #959077 } /* Comment.Special */
+.hl .gd { color: #FF4689 } /* Generic.Deleted */
+.hl .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.hl .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.hl .gr { color: #F8F8F2 } /* Generic.Error */
+.hl .gh { color: #F8F8F2 } /* Generic.Heading */
+.hl .gi { color: #A6E22E } /* Generic.Inserted */
+.hl .go { color: #66D9EF } /* Generic.Output */
+.hl .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.hl .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.hl .gu { color: #959077 } /* Generic.Subheading */
+.hl .gt { color: #F8F8F2 } /* Generic.Traceback */
+.hl .kc { color: #66D9EF } /* Keyword.Constant */
+.hl .kd { color: #66D9EF } /* Keyword.Declaration */
+.hl .kn { color: #FF4689 } /* Keyword.Namespace */
+.hl .kp { color: #66D9EF } /* Keyword.Pseudo */
+.hl .kr { color: #66D9EF } /* Keyword.Reserved */
+.hl .kt { color: #66D9EF } /* Keyword.Type */
+.hl .ld { color: #E6DB74 } /* Literal.Date */
+.hl .m { color: #AE81FF } /* Literal.Number */
+.hl .s { color: #E6DB74 } /* Literal.String */
+.hl .na { color: #A6E22E } /* Name.Attribute */
+.hl .nb { color: #F8F8F2 } /* Name.Builtin */
+.hl .nc { color: #A6E22E } /* Name.Class */
+.hl .no { color: #66D9EF } /* Name.Constant */
+.hl .nd { color: #A6E22E } /* Name.Decorator */
+.hl .ni { color: #F8F8F2 } /* Name.Entity */
+.hl .ne { color: #A6E22E } /* Name.Exception */
+.hl .nf { color: #A6E22E } /* Name.Function */
+.hl .nl { color: #F8F8F2 } /* Name.Label */
+.hl .nn { color: #F8F8F2 } /* Name.Namespace */
+.hl .nx { color: #A6E22E } /* Name.Other */
+.hl .py { color: #F8F8F2 } /* Name.Property */
+.hl .nt { color: #FF4689 } /* Name.Tag */
+.hl .nv { color: #F8F8F2 } /* Name.Variable */
+.hl .ow { color: #FF4689 } /* Operator.Word */
+.hl .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.hl .w { color: #F8F8F2 } /* Text.Whitespace */
+.hl .mb { color: #AE81FF } /* Literal.Number.Bin */
+.hl .mf { color: #AE81FF } /* Literal.Number.Float */
+.hl .mh { color: #AE81FF } /* Literal.Number.Hex */
+.hl .mi { color: #AE81FF } /* Literal.Number.Integer */
+.hl .mo { color: #AE81FF } /* Literal.Number.Oct */
+.hl .sa { color: #E6DB74 } /* Literal.String.Affix */
+.hl .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.hl .sc { color: #E6DB74 } /* Literal.String.Char */
+.hl .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.hl .sd { color: #E6DB74 } /* Literal.String.Doc */
+.hl .s2 { color: #E6DB74 } /* Literal.String.Double */
+.hl .se { color: #AE81FF } /* Literal.String.Escape */
+.hl .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.hl .si { color: #E6DB74 } /* Literal.String.Interpol */
+.hl .sx { color: #E6DB74 } /* Literal.String.Other */
+.hl .sr { color: #E6DB74 } /* Literal.String.Regex */
+.hl .s1 { color: #E6DB74 } /* Literal.String.Single */
+.hl .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.hl .bp { color: #F8F8F2 } /* Name.Builtin.Pseudo */
+.hl .fm { color: #A6E22E } /* Name.Function.Magic */
+.hl .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.hl .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.hl .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.hl .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.hl .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+.hl{background:none}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <h1><a href="index.html">CFD Cube</a></h1>
+  <span class="tag">průvodce kódem · řešič + Qt GUI</span>
+
+  <div class="group">Přehled</div>
+  <ul>
+    <li><a href="index.html" class="">Úvod</a></li>
+    <li><a href="architecture.html" class="">Architektura &amp; diagram</a></li>
+  </ul>
+
+  
+    <div class="group">Řešič — základní typy</div>
+    <ul>
+    
+      <li><a href="file_vec3.html" class="">Vec3.hpp</a></li>
+    
+      <li><a href="file_field.html" class="">Field.hpp</a></li>
+    
+      <li><a href="file_mesh.html" class="">Mesh.hpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — lineární algebra</div>
+    <ul>
+    
+      <li><a href="file_fvmatrix.html" class="">fvMatrix.hpp</a></li>
+    
+      <li><a href="file_cgsolver.html" class="">CgSolver.hpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — SIMPLE</div>
+    <ul>
+    
+      <li><a href="file_simple_h.html" class="">Simple.hpp</a></li>
+    
+      <li><a href="file_simple_cpp.html" class="">Simple.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">Řešič — I/O a vstup</div>
+    <ul>
+    
+      <li><a href="file_io_h.html" class="">io.hpp</a></li>
+    
+      <li><a href="file_io_cpp.html" class="">io.cpp</a></li>
+    
+      <li><a href="file_main_solver.html" class="">main.cpp (řešič)</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — data a vlákno</div>
+    <ul>
+    
+      <li><a href="file_gui_main.html" class="">main.cpp (GUI)</a></li>
+    
+      <li><a href="file_fielddata_h.html" class="">FieldData.hpp</a></li>
+    
+      <li><a href="file_fielddata_cpp.html" class="">FieldData.cpp</a></li>
+    
+      <li><a href="file_worker_h.html" class="">SolverWorker.hpp</a></li>
+    
+      <li><a href="file_worker_cpp.html" class="">SolverWorker.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — vykreslování</div>
+    <ul>
+    
+      <li><a href="file_fieldview_h.html" class="">FieldView.hpp</a></li>
+    
+      <li><a href="file_fieldview_cpp.html" class="active">FieldView.cpp</a></li>
+    
+      <li><a href="file_domain3d_h.html" class="">DomainView3D.hpp</a></li>
+    
+      <li><a href="file_domain3d_cpp.html" class="">DomainView3D.cpp</a></li>
+    
+    </ul>
+  
+    <div class="group">GUI — okno a sestavení</div>
+    <ul>
+    
+      <li><a href="file_mainwindow_h.html" class="">MainWindow.hpp</a></li>
+    
+      <li><a href="file_mainwindow_cpp.html" class="">MainWindow.cpp</a></li>
+    
+      <li><a href="file_cmake.html" class="">CMakeLists.txt</a></li>
+    
+    </ul>
+  
+
+  <div class="group">Teorie &amp; odkazy</div>
+  <ul>
+    <li><a href="theory/index.html">Teoretický web řešiče →</a></li>
+    <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube_qt" target="_blank" rel="noopener">
+      GitHub: Qt GUI ↗</a></li>
+    <li><a href="https://github.com/navidofek-cmyk/cfd_simple_cube" target="_blank" rel="noopener">
+      GitHub: řešič ↗</a></li>
+  </ul>
+</nav>
+<main class="content">
+  
+
+<h2>FieldView.cpp</h2>
+<p class="lead">Vykreslení heatmapy: QImage po buňkách, turbo colormapa, colorbar.</p>
+
+<div class="meta-row">
+  <span class="chip">skupina: <b>GUI — vykreslování</b></span>
+  <span class="chip">jazyk: <b>cpp</b></span>
+  <span class="chip"><b>104</b> řádků</span>
+</div>
+
+<div class="note"><b>Role v projektu:</b> Převede 2D řez na barevný obraz s legendou.</div>
+
+
+
+  
+  <h3>Hlavička / includy</h3>
+  <div class="hl"><div class="hl"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;FieldView.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QPainter&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QImage&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;algorithm&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+
+<span class="n">FieldView</span><span class="o">::</span><span class="n">FieldView</span><span class="p">(</span><span class="n">QWidget</span><span class="o">*</span><span class="w"> </span><span class="n">parent</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">QWidget</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">setMinimumSize</span><span class="p">(</span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  
+
+  
+  <h3>Příjem dat
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 11)</span></h3>
+  <div class="note ">Uloží řez (move = bez kopie) a zavolá `update()`, což jen naplánuje překreslení (nepřekresluje hned). Qt sloučí vícenásobné update() do jednoho paintEventu — efektivní při rychlých datech.</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">FieldView::setSlice</span><span class="p">(</span><span class="n">SliceData</span><span class="w"> </span><span class="n">slice</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">slice_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">slice</span><span class="p">);</span>
+<span class="w">    </span><span class="n">update</span><span class="p">();</span><span class="w">   </span><span class="c1">// naplánuje paintEvent</span>
+<span class="p">}</span>
+
+<span class="c1">// Zjednodušená &quot;turbo&quot; colormap (modrá → zelená → žlutá → červená).</span>
+</pre></div>
+</div>
+  
+  
+  <h3>Turbo colormapa
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 17)</span></h3>
+  <div class="note ">Aproximace Google „turbo&#34; mapy (modrá→zelená→žlutá→červená) trojicí lineárních ramp. Vnímatelně uniformní, lepší než klasická jet. Vstup t∈&lt;0,1&gt;, výstup QColor.</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="n">QColor</span><span class="w"> </span><span class="nf">FieldView::turbo</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="mf">1.5f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="mf">1.5f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="mf">1.5f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="kt">int</span><span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="kt">int</span><span class="p">(</span><span class="n">g</span><span class="o">*</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="kt">int</span><span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="mi">255</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  
+  
+  <h3>Vykreslení paintEvent
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 25)</span></h3>
+  <div class="note ">Postaví QImage (1 px = 1 buňka), namapuje hodnoty přes colormapu, pevné buňky našedo. Obrázek pak škáluje na widget se zachováním poměru stran. Osu y obrací (řádek 0 dole = fyzikální konvence).</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">FieldView::paintEvent</span><span class="p">(</span><span class="n">QPaintEvent</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">QPainter</span><span class="w"> </span><span class="n">pnt</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">fillRect</span><span class="p">(</span><span class="n">rect</span><span class="p">(),</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span><span class="w"> </span><span class="mi">28</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">Qt</span><span class="o">::</span><span class="n">gray</span><span class="p">);</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">rect</span><span class="p">(),</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignCenter</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Spusť výpočet…&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">bool</span><span class="w">   </span><span class="n">mesh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">isMesh</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">cbW</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">mesh</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">18</span><span class="p">;</span><span class="w">          </span><span class="c1">// šířka colorbaru</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">margin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">topH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">22</span><span class="p">;</span><span class="w">                     </span><span class="c1">// pruh na titulek</span>
+
+<span class="w">    </span><span class="c1">// ── obrázek řezu (1 pixel = 1 buňka) ────────────────────────────</span>
+<span class="w">    </span><span class="n">QImage</span><span class="w"> </span><span class="n">img</span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">QImage</span><span class="o">::</span><span class="n">Format_RGB32</span><span class="p">);</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">span</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">vmax</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">vmin</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span>
+<span class="w">            </span><span class="n">QColor</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mesh</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="w"> </span><span class="mi">90</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">75</span><span class="p">);</span><span class="w">   </span><span class="c1">// krychle</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="mi">46</span><span class="p">,</span><span class="w"> </span><span class="mi">54</span><span class="p">);</span><span class="w">                                </span><span class="c1">// tekutá buňka</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">span</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">value</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">vmin</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">span</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<span class="w">                </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">turbo</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="n">img</span><span class="p">.</span><span class="n">setPixel</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">j</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">rgb</span><span class="p">());</span><span class="w">   </span><span class="c1">// y nahoru</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ── plocha pro kreslení obrázku (bez colorbaru a titulku) ───────</span>
+<span class="w">    </span><span class="n">QRect</span><span class="w"> </span><span class="n">area</span><span class="p">(</span><span class="n">margin</span><span class="p">,</span><span class="w"> </span><span class="n">topH</span><span class="p">,</span><span class="w"> </span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">margin</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cbW</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="n">cbW</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">margin</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="p">),</span>
+<span class="w">               </span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">topH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">margin</span><span class="p">);</span>
+<span class="w">    </span><span class="n">QImage</span><span class="w"> </span><span class="n">scaled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">img</span><span class="p">.</span><span class="n">scaled</span><span class="p">(</span><span class="n">area</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span>
+<span class="w">                               </span><span class="n">mesh</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">KeepAspectRatio</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">KeepAspectRatio</span><span class="p">,</span>
+<span class="w">                               </span><span class="n">Qt</span><span class="o">::</span><span class="n">FastTransformation</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">x</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">area</span><span class="p">.</span><span class="n">width</span><span class="p">()</span><span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">())</span><span class="w">  </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">y</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">area</span><span class="p">.</span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">())</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawImage</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">scaled</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// mřížka pro řez sítě (jen když buňky nejsou příliš malé)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mesh</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">cw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">double</span><span class="p">(</span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">())</span><span class="w">  </span><span class="o">/</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">ch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">double</span><span class="p">(</span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">())</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cw</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">ch</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span><span class="w"> </span><span class="mi">92</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="w">                </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="o">*</span><span class="n">cw</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="o">*</span><span class="n">cw</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">()));</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="w">                </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">j</span><span class="o">*</span><span class="n">ch</span><span class="p">),</span><span class="w"> </span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">(),</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">j</span><span class="o">*</span><span class="n">ch</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ── titulek ─────────────────────────────────────────────────────</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">220</span><span class="p">,</span><span class="w"> </span><span class="mi">224</span><span class="p">,</span><span class="w"> </span><span class="mi">230</span><span class="p">));</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="n">margin</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">margin</span><span class="p">,</span><span class="w"> </span><span class="n">topH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span>
+<span class="w">                 </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignLeft</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignVCenter</span><span class="p">,</span><span class="w"> </span><span class="n">title_</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// ── colorbar ────────────────────────────────────────────────────</span>
+</pre></div>
+</div>
+  
+  
+  <h3>Colorbar a mřížka
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek 87)</span></h3>
+  <div class="note ">Vpravo vykreslí svislý colorbar s popisky min/max. Pro režim „síť&#34; místo heatmapy nakreslí mřížku buněk (pokud nejsou moc malé). Titulek nahoře nese veličinu/rovinu/index/iteraci.</div>
+  
+    <div class="hl"><div class="hl"><pre><span></span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">mesh</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">bx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">margin</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cbW</span><span class="p">;</span>
+<span class="w">        </span><span class="n">QRect</span><span class="w"> </span><span class="nf">bar</span><span class="p">(</span><span class="n">bx</span><span class="p">,</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">y</span><span class="p">(),</span><span class="w"> </span><span class="n">cbW</span><span class="p">,</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">height</span><span class="p">());</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">yy</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">height</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">yy</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">yy</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="w">            </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">turbo</span><span class="p">(</span><span class="n">t</span><span class="p">));</span>
+<span class="w">            </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">bar</span><span class="p">.</span><span class="n">left</span><span class="p">(),</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">top</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">yy</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">right</span><span class="p">(),</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">top</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">yy</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">205</span><span class="p">,</span><span class="w"> </span><span class="mi">210</span><span class="p">));</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawRect</span><span class="p">(</span><span class="n">bar</span><span class="p">);</span>
+<span class="w">        </span><span class="n">QString</span><span class="w"> </span><span class="n">hi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">QString</span><span class="o">::</span><span class="n">number</span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">vmax</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;g&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+<span class="w">        </span><span class="n">QString</span><span class="w"> </span><span class="n">lo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">QString</span><span class="o">::</span><span class="n">number</span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">vmin</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;g&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="n">bx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">top</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">),</span>
+<span class="w">                     </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignRight</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignVCenter</span><span class="p">,</span><span class="w"> </span><span class="n">hi</span><span class="p">);</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="n">bx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">bottom</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">),</span>
+<span class="w">                     </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignRight</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignVCenter</span><span class="p">,</span><span class="w"> </span><span class="n">lo</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  
+  
+
+  <details>
+    <summary>📄 Zobrazit celý soubor</summary>
+    <div class="hl"><div class="hl"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;FieldView.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QPainter&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QImage&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;algorithm&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+
+<span class="n">FieldView</span><span class="o">::</span><span class="n">FieldView</span><span class="p">(</span><span class="n">QWidget</span><span class="o">*</span><span class="w"> </span><span class="n">parent</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">QWidget</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">setMinimumSize</span><span class="p">(</span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="n">FieldView</span><span class="o">::</span><span class="n">setSlice</span><span class="p">(</span><span class="n">SliceData</span><span class="w"> </span><span class="n">slice</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">slice_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">slice</span><span class="p">);</span>
+<span class="w">    </span><span class="n">update</span><span class="p">();</span><span class="w">   </span><span class="c1">// naplánuje paintEvent</span>
+<span class="p">}</span>
+
+<span class="c1">// Zjednodušená &quot;turbo&quot; colormap (modrá → zelená → žlutá → červená).</span>
+<span class="n">QColor</span><span class="w"> </span><span class="n">FieldView</span><span class="o">::</span><span class="n">turbo</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="mf">1.5f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="mf">1.5f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="mf">1.5f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">t</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="kt">int</span><span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="kt">int</span><span class="p">(</span><span class="n">g</span><span class="o">*</span><span class="mi">255</span><span class="p">),</span><span class="w"> </span><span class="kt">int</span><span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="mi">255</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="n">FieldView</span><span class="o">::</span><span class="n">paintEvent</span><span class="p">(</span><span class="n">QPaintEvent</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">QPainter</span><span class="w"> </span><span class="nf">pnt</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">fillRect</span><span class="p">(</span><span class="n">rect</span><span class="p">(),</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span><span class="w"> </span><span class="mi">28</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">Qt</span><span class="o">::</span><span class="n">gray</span><span class="p">);</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">rect</span><span class="p">(),</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignCenter</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Spusť výpočet…&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">bool</span><span class="w">   </span><span class="n">mesh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">isMesh</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">cbW</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">mesh</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">18</span><span class="p">;</span><span class="w">          </span><span class="c1">// šířka colorbaru</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">margin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w">    </span><span class="n">topH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">22</span><span class="p">;</span><span class="w">                     </span><span class="c1">// pruh na titulek</span>
+
+<span class="w">    </span><span class="c1">// ── obrázek řezu (1 pixel = 1 buňka) ────────────────────────────</span>
+<span class="w">    </span><span class="n">QImage</span><span class="w"> </span><span class="nf">img</span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">QImage</span><span class="o">::</span><span class="n">Format_RGB32</span><span class="p">);</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">span</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">vmax</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">vmin</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span>
+<span class="w">            </span><span class="n">QColor</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">solid</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mesh</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="w"> </span><span class="mi">90</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">75</span><span class="p">);</span><span class="w">   </span><span class="c1">// krychle</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">QColor</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="mi">46</span><span class="p">,</span><span class="w"> </span><span class="mi">54</span><span class="p">);</span><span class="w">                                </span><span class="c1">// tekutá buňka</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">span</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">value</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">vmin</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">span</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<span class="w">                </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">turbo</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="n">img</span><span class="p">.</span><span class="n">setPixel</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">j</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">rgb</span><span class="p">());</span><span class="w">   </span><span class="c1">// y nahoru</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ── plocha pro kreslení obrázku (bez colorbaru a titulku) ───────</span>
+<span class="w">    </span><span class="n">QRect</span><span class="w"> </span><span class="n">area</span><span class="p">(</span><span class="n">margin</span><span class="p">,</span><span class="w"> </span><span class="n">topH</span><span class="p">,</span><span class="w"> </span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">margin</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cbW</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="n">cbW</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">margin</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="p">),</span>
+<span class="w">               </span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">topH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">margin</span><span class="p">);</span>
+<span class="w">    </span><span class="n">QImage</span><span class="w"> </span><span class="n">scaled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">img</span><span class="p">.</span><span class="n">scaled</span><span class="p">(</span><span class="n">area</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span>
+<span class="w">                               </span><span class="n">mesh</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">KeepAspectRatio</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">KeepAspectRatio</span><span class="p">,</span>
+<span class="w">                               </span><span class="n">Qt</span><span class="o">::</span><span class="n">FastTransformation</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">x</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">area</span><span class="p">.</span><span class="n">width</span><span class="p">()</span><span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">())</span><span class="w">  </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">y</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">area</span><span class="p">.</span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">())</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawImage</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">scaled</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// mřížka pro řez sítě (jen když buňky nejsou příliš malé)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mesh</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">cw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">double</span><span class="p">(</span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">())</span><span class="w">  </span><span class="o">/</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">ch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">double</span><span class="p">(</span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">())</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cw</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">ch</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span><span class="w"> </span><span class="mi">92</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">w</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="w">                </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="o">*</span><span class="n">cw</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="o">*</span><span class="n">cw</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">height</span><span class="p">()));</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">slice_</span><span class="p">.</span><span class="n">h</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="w">                </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">j</span><span class="o">*</span><span class="n">ch</span><span class="p">),</span><span class="w"> </span><span class="n">QPointF</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">scaled</span><span class="p">.</span><span class="n">width</span><span class="p">(),</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">j</span><span class="o">*</span><span class="n">ch</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ── titulek ─────────────────────────────────────────────────────</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">220</span><span class="p">,</span><span class="w"> </span><span class="mi">224</span><span class="p">,</span><span class="w"> </span><span class="mi">230</span><span class="p">));</span>
+<span class="w">    </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="n">margin</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="o">*</span><span class="n">margin</span><span class="p">,</span><span class="w"> </span><span class="n">topH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span>
+<span class="w">                 </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignLeft</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignVCenter</span><span class="p">,</span><span class="w"> </span><span class="n">title_</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// ── colorbar ────────────────────────────────────────────────────</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">mesh</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">bx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">width</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">margin</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cbW</span><span class="p">;</span>
+<span class="w">        </span><span class="n">QRect</span><span class="w"> </span><span class="nf">bar</span><span class="p">(</span><span class="n">bx</span><span class="p">,</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">y</span><span class="p">(),</span><span class="w"> </span><span class="n">cbW</span><span class="p">,</span><span class="w"> </span><span class="n">area</span><span class="p">.</span><span class="n">height</span><span class="p">());</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">yy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">yy</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">height</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">yy</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">yy</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">height</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="w">            </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">turbo</span><span class="p">(</span><span class="n">t</span><span class="p">));</span>
+<span class="w">            </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">bar</span><span class="p">.</span><span class="n">left</span><span class="p">(),</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">top</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">yy</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">right</span><span class="p">(),</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">top</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">yy</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">205</span><span class="p">,</span><span class="w"> </span><span class="mi">210</span><span class="p">));</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawRect</span><span class="p">(</span><span class="n">bar</span><span class="p">);</span>
+<span class="w">        </span><span class="n">QString</span><span class="w"> </span><span class="n">hi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">QString</span><span class="o">::</span><span class="n">number</span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">vmax</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;g&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+<span class="w">        </span><span class="n">QString</span><span class="w"> </span><span class="n">lo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">QString</span><span class="o">::</span><span class="n">number</span><span class="p">(</span><span class="n">slice_</span><span class="p">.</span><span class="n">vmin</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;g&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="n">bx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">top</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">),</span>
+<span class="w">                     </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignRight</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignVCenter</span><span class="p">,</span><span class="w"> </span><span class="n">hi</span><span class="p">);</span>
+<span class="w">        </span><span class="n">pnt</span><span class="p">.</span><span class="n">drawText</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="n">bx</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">bottom</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">),</span>
+<span class="w">                     </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignRight</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">AlignVCenter</span><span class="p">,</span><span class="w"> </span><span class="n">lo</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+  </details>
+
+
+
+<div class="nav-bottom">
+  <a href="file_fieldview_h.html">← FieldView.hpp</a>
+  <a class="next" href="file_domain3d_h.html">DomainView3D.hpp →</a>
+</div>
+
+
+  <div class="footer">FastAPI + uv · kód se čte živě z disku</div>
+</main>
+</body>
+</html>

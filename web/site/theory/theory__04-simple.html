@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Algoritmus SIMPLE — CFD Cube docs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- MathJax pro rovnice -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+  <button id="menu-toggle" aria-label="menu">☰</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">⬛</span>
+      <div>
+        <strong>CFD Cube</strong>
+        <small>3D kanál + krychle</small>
+      </div>
+    </div>
+    <nav>
+      
+      <div class="nav-section">
+        <h4>Úvod</h4>
+        <ul>
+          
+          <li>
+            <a href="index.html"
+               class="">Přehled projektu</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Teorie</h4>
+        <ul>
+          
+          <li>
+            <a href="theory__01-navier-stokes.html"
+               class="">1. Navierovy–Stokesovy rovnice</a>
+          </li>
+          
+          <li>
+            <a href="theory__02-fvm.html"
+               class="">2. Metoda konečných objemů</a>
+          </li>
+          
+          <li>
+            <a href="theory__03-convection.html"
+               class="">3. Konvekce a upwind schéma</a>
+          </li>
+          
+          <li>
+            <a href="theory__04-simple.html"
+               class="active">4. Algoritmus SIMPLE</a>
+          </li>
+          
+          <li>
+            <a href="theory__05-rhie-chow.html"
+               class="">5. Rhie–Chow interpolace</a>
+          </li>
+          
+          <li>
+            <a href="theory__06-boundary.html"
+               class="">6. Okrajové podmínky</a>
+          </li>
+          
+          <li>
+            <a href="theory__07-linear-system.html"
+               class="">7. Řídké matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="theory__08-cg.html"
+               class="">8. Conjugate Gradient solver</a>
+          </li>
+          
+          <li>
+            <a href="theory__09-parallel.html"
+               class="">9. Paralelizace (OpenMP)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>C++ implementace</h4>
+        <ul>
+          
+          <li>
+            <a href="cpp__00-overview.html"
+               class="">Architektura projektu</a>
+          </li>
+          
+          <li>
+            <a href="cpp__01-vec3.html"
+               class="">Vec3.hpp — vektor a operátory</a>
+          </li>
+          
+          <li>
+            <a href="cpp__02-field.html"
+               class="">Field.hpp — šablony a kontejnery</a>
+          </li>
+          
+          <li>
+            <a href="cpp__03-mesh.html"
+               class="">Mesh.hpp — síť a maska</a>
+          </li>
+          
+          <li>
+            <a href="cpp__04-fvmatrix.html"
+               class="">fvMatrix.hpp — matice a stencil</a>
+          </li>
+          
+          <li>
+            <a href="cpp__05-cgsolver.html"
+               class="">CgSolver.hpp — lambda a workspace</a>
+          </li>
+          
+          <li>
+            <a href="cpp__06-simple.html"
+               class="">Simple.cpp — jádro řešiče</a>
+          </li>
+          
+          <li>
+            <a href="cpp__07-io.html"
+               class="">io.cpp — vstup/výstup</a>
+          </li>
+          
+          <li>
+            <a href="cpp__08-main.html"
+               class="">main.cpp — vstupní bod</a>
+          </li>
+          
+          <li>
+            <a href="cpp__09-language.html"
+               class="">Použité prvky C++ (reference)</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Řešič</h4>
+        <ul>
+          
+          <li>
+            <a href="solver__01-loop.html"
+               class="">SIMPLE smyčka krok po kroku</a>
+          </li>
+          
+          <li>
+            <a href="solver__02-running.html"
+               class="">Spuštění a parametry</a>
+          </li>
+          
+          <li>
+            <a href="solver__03-validation.html"
+               class="">Validace a vizualizace</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h4>Výsledky</h4>
+        <ul>
+          
+          <li>
+            <a href="results.html"
+               class="">Vizualizace výsledků</a>
+          </li>
+          
+        </ul>
+      </div>
+      
+    </nav>
+  </aside>
+
+  <main>
+    <article class="content">
+      
+  
+  <details class="toc-box" open>
+    <summary>Obsah stránky</summary>
+    <div class="toc">
+<ul>
+<li><a href="#algoritmus-simple">Algoritmus SIMPLE</a><ul>
+<li><a href="#problem-spojeni-tlaku-a-rychlosti">Problém spojení tlaku a rychlosti</a></li>
+<li><a href="#princip-prediktorkorektor">Princip: prediktor–korektor</a><ul>
+<li><a href="#odvozeni-tlakove-rovnice">Odvození tlakové rovnice</a></li>
+</ul>
+</li>
+<li><a href="#kroky-jedne-iterace-mapovano-na-kod">Kroky jedné iterace (mapováno na kód)</a></li>
+<li><a href="#podrelaxace">Podrelaxace</a></li>
+<li><a href="#konvergence">Konvergence</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </details>
+  
+
+  <h1 id="algoritmus-simple">Algoritmus SIMPLE<a class="headerlink" href="#algoritmus-simple" title="Permanent link">&para;</a></h1>
+<p><strong>SIMPLE</strong> = <em>Semi-Implicit Method for Pressure-Linked Equations</em> (Patankar &amp;
+Spalding, 1972). Řeší zásadní problém nestlačitelných rovnic: <strong>pro tlak
+neexistuje vlastní rovnice</strong>.</p>
+<h2 id="problem-spojeni-tlaku-a-rychlosti">Problém spojení tlaku a rychlosti<a class="headerlink" href="#problem-spojeni-tlaku-a-rychlosti" title="Permanent link">&para;</a></h2>
+<p>Máme:
+- 3 hybnostní rovnice (pro $u, v, w$) — obsahují tlakový gradient $\nabla p$
+- 1 rovnici kontinuity $\nabla\cdot\mathbf{u} = 0$ — tlak vůbec neobsahuje</p>
+<p>Tlak tedy nemá svou evoluční rovnici. Jeho role je nepřímá: je to ta veličina,
+která <em>donutí</em> rychlostní pole splnit kontinuitu. SIMPLE tuto vazbu řeší
+iteračně.</p>
+<h2 id="princip-prediktorkorektor">Princip: prediktor–korektor<a class="headerlink" href="#princip-prediktorkorektor" title="Permanent link">&para;</a></h2>
+<p>Každá iterace SIMPLE má dva kroky:</p>
+<ol>
+<li><strong>Prediktor</strong> — vyřeš hybnost se <em>starým</em> tlakem → rychlost $\mathbf{u}^<em>$,
+   která obecně </em><em>nesplňuje</em>* kontinuitu.</li>
+<li><strong>Korektor</strong> — najdi tlakovou korekci $p'$, která rychlost upraví tak, aby
+   kontinuitu splnila.</li>
+</ol>
+<h3 id="odvozeni-tlakove-rovnice">Odvození tlakové rovnice<a class="headerlink" href="#odvozeni-tlakove-rovnice" title="Permanent link">&para;</a></h3>
+<p>Diskrétní hybnostní rovnice pro buňku P se dá zapsat:</p>
+<p>$$a_P \mathbf{u}<em nb="nb">P = \underbrace{\sum</em>} a_{nb}\mathbf{u<em _mathbf_H="\mathbf{H">{nb} + \mathbf{b}}</em> - V\nabla p$$}(\mathbf{u})</p>
+<p>Vydělíme $a_P$ a zavedeme operátor $\mathbf{H}/a_P$:</p>
+<p>$$\mathbf{u}<em _mathbf_HbyA="\mathbf{HbyA">P = \underbrace{\frac{\mathbf{H}(\mathbf{u})}{a_P}}</em>\nabla p$$}} - \frac{V}{a_P</p>
+<p>Označme $r_{AU} = 1/a_P$. Dosadíme do kontinuity $\nabla\cdot\mathbf{u} = 0$:</p>
+<p>$$\nabla\cdot\left(\mathbf{HbyA} - r_{AU}\,V\,\nabla p\right) = 0$$</p>
+<p>Přeskupením vznikne <strong>tlaková Poissonova rovnice</strong>:</p>
+<p>$$\boxed{\nabla\cdot(r_{AU}\,V\,\nabla p) = \nabla\cdot\mathbf{HbyA}}$$</p>
+<p>Levá strana je Laplaceův operátor tlaku (řeší se přes <a href="theory__08-cg.html">CG</a>),
+pravá je divergence rychlosti bez tlakové korekce.</p>
+<h2 id="kroky-jedne-iterace-mapovano-na-kod">Kroky jedné iterace (mapováno na kód)<a class="headerlink" href="#kroky-jedne-iterace-mapovano-na-kod" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Krok</th>
+<th>Rovnice</th>
+<th>V kódu (<code>Simple.cpp</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Sestav hybnostní matici</td>
+<td><code>buildUEqn</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Podrelaxace</td>
+<td><code>UEqn.relax(αU)</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Vyřeš $\mathbf{u}^*$</td>
+<td><code>solveWithExtra</code> (Jacobi)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Spočti $a_P$, $\mathbf{HbyA}$</td>
+<td><code>UEqn.A()</code>, <code>UEqn.H()</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Toky z HbyA</td>
+<td><code>interpFlux</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Sestav tlakovou rovnici</td>
+<td><code>buildPEqn</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Vyřeš tlak</td>
+<td><code>cgSolve</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Korekce toků (Rhie–Chow)</td>
+<td>viz krok 5 v solve()</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Korekce rychlosti $\mathbf{u} = \mathbf{HbyA} - r_{AU}\nabla p$</td>
+<td>krok 6 v solve()</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Podrelaxace tlaku</td>
+<td>$p = p^{old} + \alpha_P(p - p^{old})$</td>
+</tr>
+</tbody>
+</table>
+<h2 id="podrelaxace">Podrelaxace<a class="headerlink" href="#podrelaxace" title="Permanent link">&para;</a></h2>
+<p>SIMPLE je iterační a bez tlumení by oscilovala. Proto se změny <strong>podrelaxují</strong>:</p>
+<p>$$p^{new} = p^{old} + \alpha_P\,(p^{vyřešené} - p^{old})$$</p>
+<p>s $\alpha_P = 0{,}3$ pro tlak a $\alpha_U = 0{,}7$ pro rychlost (implicitně, přes
+úpravu diagonály v <code>relax()</code>). Tyto hodnoty jsou klasická konzervativní volba.</p>
+<div class="admonition note">
+<p class="admonition-title">Podrelaxace rychlosti implicitně</p>
+<p>Pro rychlost se nepodrelaxuje výsledek, ale rovnice: diagonála se vydělí
+$\alpha_U$ a do zdroje se přidá $(a_P/\alpha_U - a_P)\,\mathbf{u}^{old}$. To je
+stabilnější. Viz <code>fvMatrix::relax</code>.</p>
+</div>
+
+<h2 id="konvergence">Konvergence<a class="headerlink" href="#konvergence" title="Permanent link">&para;</a></h2>
+<p>Iterace se opakují, dokud relativní reziduum kontinuity neklesne pod toleranci:</p>
+<p>$$\frac{\sum_c |\nabla\cdot\mathbf{u}|_c}{\text{(hodnota v 1. iteraci)}} &lt; \text{tol}$$</p>
+<p>Pro Re = 20 na hrubé síti (32k buněk) to je ~110 iterací; na jemné (2 mil.) se
+reziduum ustálí kolem $10^{-5}$ — viz <a href="solver__03-validation.html">Validace</a>.</p>
+
+  <nav class="page-nav">
+    
+      <a class="prev" href="theory__03-convection.html">
+        ← 3. Konvekce a upwind schéma</a>
+    
+    
+      <a class="next" href="theory__05-rhie-chow.html">
+        5. Rhie–Chow interpolace →</a>
+    
+  </nav>
+
+    </article>
+  </main>
+  <script src="menu.js"></script>
+</body>
+</html>
