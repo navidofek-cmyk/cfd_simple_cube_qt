@@ -110,8 +110,8 @@ def grouped_files() -> dict[str, list]:
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     total_loc = sum(len(_read(Path(m["path"]))) for m in FILES.values())
-    return templates.TemplateResponse("index.html", {
-        "request": request,
+    # Pozn.: novější Starlette chce request jako 1. argument (ne název šablony).
+    return templates.TemplateResponse(request, "index.html", {
         "groups": grouped_files(),
         "n_files": len(FILES),
         "total_loc": total_loc,
@@ -130,8 +130,7 @@ def file_page(request: Request, slug: str):
     i = slugs.index(slug)
     prev = slugs[i - 1] if i > 0 else None
     nxt = slugs[i + 1] if i < len(slugs) - 1 else None
-    return templates.TemplateResponse("file.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "file.html", {
         "slug": slug, "meta": meta, "data": data,
         "groups": grouped_files(),
         "prev": (prev, FILES[prev]["title"]) if prev else None,
@@ -142,4 +141,4 @@ def file_page(request: Request, slug: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("server:app", host="0.0.0.0", port=8085, reload=True)
