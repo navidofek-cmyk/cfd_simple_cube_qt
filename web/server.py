@@ -119,6 +119,15 @@ def index(request: Request):
     })
 
 
+@app.get("/architecture", response_class=HTMLResponse)
+def architecture(request: Request):
+    return templates.TemplateResponse(request, "architecture.html", {
+        "groups": grouped_files(),
+        "arch": True,
+        "pygments_css": _PYGMENTS_CSS,
+    })
+
+
 @app.get("/file/{slug}", response_class=HTMLResponse)
 def file_page(request: Request, slug: str):
     meta = FILES.get(slug)

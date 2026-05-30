@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Architektura — CFD Cube{% endblock %}
+{% block content %}
+
+<h2>Architektura &amp; jak spolu komponenty komunikují</h2>
+<p class="lead">
+  Projekt má dvě části: <b>CFD řešič</b> (C++ jádro, samostatně spustitelné CLI)
+  a <b>Qt5 GUI</b>, které řešič používá jako knihovnu a přidává interaktivní
+  vizualizaci. Klíčem je, že výpočet běží <b>ve vlastním vlákně</b> a s GUI
+  komunikuje výhradně přes <b>signály/sloty</b>.
+</p>
+
+<h3>Celkový diagram</h3>
+<div class="diagram"><pre>
+            ┌──────────────────────────────────────────────────────────┐
+            │                    GUI proces (cfd_cube_qt)               │
+            │                                                            │
+            │   GUI vlákno                         Worker vlákno         │
+            │  ┌───────────────────┐    signály   ┌────────────────────┐│
+            │  │ MainWindow        │  startSolver  │ SolverWorker       ││
+            │  │  · formulář zadání│ ────────────► │  · drží            ││
+            │  │  · FieldView (2D) │               │    ChannelSolver   ││
+            │  │  · DomainView3D   │  iteration    │  · run()           ││
+            │  │  · QChart rezidua │ ◄──────────── │  · callback /iter  ││
+            │  │                   │ snapshotReady │                    ││
+            │  │                   │ sliceReady    │                    ││
+            │  │                   │ finished      │                    ││
+            │  └─────────┬─────────┘               └─────────┬──────────┘│
+            │            │  setView/setMode/stop             │           │
+            │            │  (std::atomic – i za běhu)        │ volá      │
+            │            └───────────────────────────────────┘           │
+            └──────────────────────────────────────────────│────────────┘
+                                                            │ #include + link
+                                                            ▼
+            ┌──────────────────────────────────────────────────────────┐
+            │              CFD řešič (cfdcore – statická knihovna)       │
+            │                                                            │
+            │   ChannelSolver::solve()  ── SIMPLE smyčka ──┐             │
+            │     1. hybnost (buildUEqn) → U*              │             │
+            │     2. A, HbyA                               │ každou      │
+            │     3. toky (interpFlux)                     │ iteraci:    │
+            │     4. tlak (buildPEqn → cgSolve)            │ onIteration │
+            │     5. Rhie–Chow korekce toků                │ (callback)  │
+            │     6. korekce rychlosti                     │             │
+            │     7. podrelaxace tlaku                     │             │
+            │     8. reziduum ────────────────────────────┘             │
+            │                                                            │
+            │   fvMatrix (7-diagonální)   CgSolver (CG)   Mesh   io      │
+            └──────────────────────────────────────────────────────────┘
+</pre></div>
+
+<h3>Tok dat — od kliknutí po obrázek</h3>
+<div class="card">
+<ol class="flow">
+  <li><b>Uživatel</b> nastaví parametry a klikne <code>Spustit</code>.</li>
+  <li><b>MainWindow</b> sebere formulář do <code>SimParams</code> a vyšle signál
+      <code>startSolver(p)</code>.</li>
+  <li>Signál přejde <b>přes hranici vláken</b> (queued connection) do
+      <code>SolverWorker::run()</code> ve worker vlákně.</li>
+  <li>Worker vytvoří <code>ChannelSolver</code>, nastaví mu <b>lambda callback</b>
+      <code>onIteration</code> a spustí <code>solve()</code>.</li>
+  <li>Řešič každou iteraci zavolá callback → ten vyšle <code>iteration</code>
+      (reziduum) a periodicky <code>snapshotReady</code> (celé pole) nebo
+      <code>sliceReady</code> (2D řez).</li>
+  <li>Signály se doručí zpět do <b>GUI vlákna</b>: graf reziduí se aktualizuje,
+      <b>FieldView</b>/<b>DomainView3D</b> překreslí.</li>
+  <li>Uživatel může <b>za běhu</b> měnit pohled (rovina, veličina, řez) — to jde
+      přes <code>std::atomic</code>, takže to neblokuje běžící smyčku.</li>
+  <li><code>Stop</code>/<code>Konec</code> nastaví atomický příznak; callback
+      vrátí <code>false</code> a smyčka se korektně ukončí.</li>
+</ol>
+</div>
+
+<h3>Proč je to navržené takhle</h3>
+
+<h4 style="color:var(--accent2);margin-top:1.2rem">Výpočet ve vlastním vlákně</h4>
+<div class="note">
+  CFD výpočet je dlouhý a blokující. Kdyby běžel v GUI vlákně, okno by „zamrzlo".
+  Worker objekt přesunutý přes <code>moveToThread</code> drží GUI responzivní.
+  Zvolen vzor <b>worker object</b> (ne dědění z QThread) — čistší a doporučený.
+</div>
+
+<h4 style="color:var(--accent2)">Komunikace přes signály/sloty</h4>
+<div class="note">
+  Qt signály mezi vlákny jsou <b>thread-safe</b> (queued connection zařadí data
+  do fronty cílového vlákna). Proto se vlastní typy (<code>SimParams</code>,
+  <code>SliceData</code>, <code>FieldSnapshot</code>) registrují přes
+  <code>qRegisterMetaType</code>. Žádné ruční zámky pro předávání dat.
+</div>
+
+<h4 style="color:var(--accent2)">Atomiky pro ovládání za běhu</h4>
+<div class="note">
+  Volba pohledu a Stop musí fungovat i během blokující smyčky <code>solve()</code>.
+  Řeší se <code>std::atomic</code> proměnnými, které GUI zapisuje a worker čte
+  v callbacku — lock-free, bez rizika deadlocku.
+</div>
+
+<h4 style="color:var(--accent2)">Neinvazivní napojení na řešič</h4>
+<div class="note">
+  Řešič zůstal samostatně použitelný. Jediné rozšíření je volitelný callback
+  <code>onIteration</code> (2 řádky). Bez něj se chová přesně jako dřív — GUI je
+  tak čistá nadstavba, ne fork.
+</div>
+
+<h3>Dvě úrovně dokumentace</h3>
+<div class="card">
+  <p>
+    Tenhle web je <b>průvodce zdrojovým kódem</b> (co dělá který soubor a proč).
+    Pro <b>teorii a odvození</b> (Navier–Stokes, metoda konečných objemů, SIMPLE,
+    Rhie–Chow, CG, okrajové podmínky) má řešič vlastní dokumentační web:
+  </p>
+  <p style="margin-top:.6rem">
+    👉 <a href="http://127.0.0.1:8000/" target="_blank" rel="noopener">
+    Teoretický web řešiče (cfd_simple_cube/docs) ↗</a>
+    <br><span style="color:var(--muted);font-size:.85rem">
+    Spusť ho z <code>cfd_simple_cube/docs</code>:
+    <code>uv run uvicorn app.main:app --port 8000</code></span>
+  </p>
+</div>
+
+{% endblock %}
