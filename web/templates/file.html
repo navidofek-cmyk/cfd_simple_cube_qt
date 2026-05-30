@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ meta.title }} — průvodce kódem{% endblock %}
+{% block content %}
+
+<h2>{{ meta.title }}</h2>
+<p class="lead">{{ meta.summary }}</p>
+
+<div class="meta-row">
+  <span class="chip">skupina: <b>{{ meta.group }}</b></span>
+  <span class="chip">jazyk: <b>{{ meta.lang }}</b></span>
+  {% if not data.missing %}<span class="chip"><b>{{ data.loc }}</b> řádků</span>{% endif %}
+</div>
+
+<div class="note"><b>Role v projektu:</b> {{ meta.role }}</div>
+
+{% if data.missing %}
+  <p class="missing">⚠ Zdrojový soubor se nepodařilo načíst z disku
+  ({{ meta.path }}). Zkontroluj, že projekt je na očekávaném místě.</p>
+{% else %}
+
+  {% if data.preamble %}
+  <h3>Hlavička / includy</h3>
+  <div class="hl">{{ data.preamble|safe }}</div>
+  {% endif %}
+
+  {% for sec in data.sections %}
+  <h3>{{ sec.heading }}{% if sec.lineno %}
+      <span style="font-size:.7rem;color:var(--muted);font-weight:normal">
+      (řádek {{ sec.lineno }})</span>{% endif %}</h3>
+  <div class="note {% if '★' in sec.heading %}star{% endif %}">{{ sec.note }}</div>
+  {% if sec.missing %}
+    <p class="missing">⚠ Úsek se v souboru nenašel (kód se možná změnil).</p>
+  {% else %}
+    <div class="hl">{{ sec.code|safe }}</div>
+  {% endif %}
+  {% endfor %}
+
+  <details>
+    <summary>📄 Zobrazit celý soubor</summary>
+    <div class="hl">{{ data.full|safe }}</div>
+  </details>
+
+{% endif %}
+
+<div class="nav-bottom">
+  {% if prev %}<a href="/file/{{ prev[0] }}">← {{ prev[1] }}</a>{% else %}<span></span>{% endif %}
+  {% if next %}<a class="next" href="/file/{{ next[0] }}">{{ next[1] }} →</a>{% else %}<span></span>{% endif %}
+</div>
+
+{% endblock %}

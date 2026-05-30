@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}CFD Cube — průvodce kódem{% endblock %}</title>
+<style>
+:root{
+  --bg:#0d1117; --fg:#e6edf3; --accent:#58a6ff; --accent2:#f0a050;
+  --muted:#8b949e; --card:#161b22; --border:#30363d; --note:#1c2530;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  line-height:1.6;display:flex;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── postranní navigace ── */
+.sidebar{width:280px;flex-shrink:0;background:var(--card);
+  border-right:1px solid var(--border);padding:1.2rem;overflow-y:auto;
+  height:100vh;position:sticky;top:0}
+.sidebar h1{font-size:1.1rem;margin-bottom:.2rem}
+.sidebar .tag{color:var(--muted);font-size:.78rem;margin-bottom:1rem;display:block}
+.sidebar .group{color:var(--accent2);font-size:.72rem;text-transform:uppercase;
+  letter-spacing:.05em;margin:1rem 0 .3rem;font-weight:600}
+.sidebar ul{list-style:none}
+.sidebar li a{display:block;padding:.25rem .5rem;border-radius:5px;
+  font-size:.88rem;color:var(--fg)}
+.sidebar li a:hover{background:var(--note);text-decoration:none}
+.sidebar li a.active{background:var(--accent);color:#0d1117;font-weight:600}
+
+/* ── obsah ── */
+.content{flex:1;padding:2rem 2.5rem;max-width:1000px;overflow-x:hidden}
+h2{font-size:1.9rem;margin-bottom:.3rem}
+h3{font-size:1.25rem;color:var(--accent);margin:2rem 0 .6rem;
+  border-bottom:1px solid var(--border);padding-bottom:.3rem}
+.lead{color:var(--muted);font-size:1.05rem;margin-bottom:1.5rem}
+.meta-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.chip{background:var(--card);border:1px solid var(--border);
+  padding:.25rem .7rem;border-radius:1rem;font-size:.8rem;color:var(--muted)}
+.chip b{color:var(--fg)}
+
+.note{background:var(--note);border-left:3px solid var(--accent);
+  padding:.8rem 1rem;border-radius:0 6px 6px 0;margin:.6rem 0 1rem;
+  font-size:.95rem}
+.note.star{border-left-color:var(--accent2)}
+
+pre{background:#0b0e13;border:1px solid var(--border);border-radius:8px;
+  padding:1rem;overflow-x:auto;margin:.5rem 0 0;font-size:.84rem;line-height:1.45}
+code,pre{font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace}
+.hl pre{margin:0;border:none;padding:0;background:none}
+.lineno{color:var(--muted);font-size:.78rem;margin:.4rem 0 .2rem}
+
+.card{background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:1.4rem;margin:1rem 0}
+.card h4{font-size:1.05rem;margin-bottom:.3rem}
+.card p{color:var(--muted);font-size:.9rem}
+
+details{margin:1.5rem 0}
+details summary{cursor:pointer;color:var(--accent);font-size:.9rem;padding:.4rem 0}
+
+.nav-bottom{display:flex;justify-content:space-between;margin-top:2.5rem;
+  padding-top:1.5rem;border-top:1px solid var(--border);gap:1rem}
+.nav-bottom a{flex:1;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:.8rem 1rem;font-size:.9rem}
+.nav-bottom a.next{text-align:right}
+.missing{color:var(--accent2);font-size:.85rem;font-style:italic}
+.footer{color:var(--muted);font-size:.8rem;margin-top:2rem;text-align:center}
+{{ pygments_css|safe }}
+.hl{background:none}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <h1><a href="/">CFD Cube</a></h1>
+  <span class="tag">průvodce kódem · řešič + Qt GUI</span>
+  {% for group, items in groups.items() %}
+    <div class="group">{{ group }}</div>
+    <ul>
+    {% for s, m in items %}
+      <li><a href="/file/{{ s }}" class="{% if s == slug %}active{% endif %}">{{ m.title }}</a></li>
+    {% endfor %}
+    </ul>
+  {% endfor %}
+</nav>
+<main class="content">
+  {% block content %}{% endblock %}
+  <div class="footer">FastAPI + uv · kód se čte živě z disku</div>
+</main>
+</body>
+</html>

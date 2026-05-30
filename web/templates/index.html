@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>CFD Cube — průvodce kódem</h2>
+<p class="lead">
+  Interaktivní rozpis <b>všech částí kódu</b> projektu: 3D CFD řešič
+  (metoda konečných objemů + SIMPLE) a jeho nativní <b>Qt5 grafické rozhraní</b>.
+  Každý soubor je rozsekaný na logické sekce a okomentovaný česky.
+</p>
+
+<div class="meta-row">
+  <span class="chip"><b>{{ n_files }}</b> souborů</span>
+  <span class="chip"><b>{{ total_loc }}</b> řádků kódu</span>
+  <span class="chip">C++20 · Qt5 · OpenMP</span>
+  <span class="chip">FastAPI · uv</span>
+</div>
+
+<div class="card">
+  <h4>Jak to číst</h4>
+  <p>
+    Vlevo je navigace seřazená od základních datových typů řešiče, přes
+    lineární algebru a algoritmus SIMPLE, až po vlákno a vykreslování GUI.
+    Doporučené pořadí je shora dolů — staví na sobě. Každá stránka ukazuje
+    skutečný kód (čtený živě z disku) rozdělený na sekce s výkladem.
+  </p>
+</div>
+
+{% for group, items in groups.items() %}
+<h3>{{ group }}</h3>
+{% for s, m in items %}
+<div class="card">
+  <h4><a href="/file/{{ s }}">{{ m.title }}</a></h4>
+  <p>{{ m.summary }} <br><em>{{ m.role }}</em></p>
+</div>
+{% endfor %}
+{% endfor %}
+
+{% endblock %}
